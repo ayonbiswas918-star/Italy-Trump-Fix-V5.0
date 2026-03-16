@@ -176,16 +176,63 @@ function resolveTrick(room){
   else{gs.currentPlayer=w.position;setTimeout(()=>{io.to(room.code).emit('newTrickStarting',{trickNumber:gs.trickNumber,leader:gs.currentPlayer,leaderName:nm(room,gs.currentPlayer)});sendTurn(room,gs.currentPlayer);},2000);}
 }
 function endRound(room){
-  const gs=room.gameState,ct=teamOf(gs.currentBidder),ot=otherTeam(ct),rs={A:0,B:0};
-  if(gs.tricksWon[ct]>=gs.currentBid){rs[ct]=gs.currentBid;}
-  else{rs[ct]=-gs.currentBid;rs[ot]=Math.max(0,gs.tricksWon[ot]-5);}
-  gs.scores.A+=rs.A;gs.scores.B+=rs.B;gs.phase='roundEnd';
-  const msg=gs.tricksWon[ct]>=gs.currentBid
-    ?`Team ${ct} succeeded! Won ${gs.tricksWon[ct]} tricks (needed ${gs.currentBid}).`
-    :`Team ${ct} failed! Won only ${gs.tricksWon[ct]} tricks (needed ${gs.currentBid}).`;
-  io.to(room.code).emit('roundEnd',{tricksWon:gs.tricksWon,bid:gs.currentBid,bidder:gs.currentBidder,bidderTeam:ct,roundScore:rs,totalScores:gs.scores,message:msg,powerCard:gs.powerCard?.card??null});
-  if(gs.scores.A>=gs.matchTarget||gs.scores.B>=gs.matchTarget){
-    const winner=gs.scores.A>=gs.matchTarget?'A':'B';gs.phase='gameOver';
+  const gs  = room.gameState;
+  const ct  = teamOf(gs.currentBidder);   // calling team
+  const ot  = otherTeam(ct);              // opponent team
+  const rs  = {A:0, B:0};
+  const OPP_TARGET = 5;
+
+  // ── Calling team scoring ──
+  // Win:  tricks >= bid  →  +bid
+  // Lose: tricks <  bid  →  -bid
+  if(gs.tricksWon[ct] >= gs.currentBid){
+    rs[ct] = gs.currentBid;
+  } else {
+    rs[ct] = -gs.currentBid;
+  }
+
+  // ── Opponent team scoring (fixed target = 5, independent) ──
+  // Win:  tricks >= 5  →  +5
+  // Lose: tricks <  5  →  -5
+  if(gs.tricksWon[ot] >= OPP_TARGET){
+    rs[ot] = OPP_TARGET;
+  } else {
+    rs[ot] = -OPP_TARGET;
+  }
+
+  gs.scores.A += rs.A;
+  gs.scores.B += rs.B;
+  gs.phase = 'roundEnd';
+
+  // Build result message
+  const callerWon = gs.tricksWon[ct] >= gs.currentBid;
+  const oppWon    = gs.tricksWon[ot] >= OPP_TARGET;
+  const msg = [
+    callerWon
+      ? `Team ${ct} succeeded! Won ${gs.tricksWon[ct]} tricks (needed ${gs.currentBid}) → +${gs.currentBid}`
+      : `Team ${ct} failed! Won only ${gs.tricksWon[ct]} tricks (needed ${gs.currentBid}) → -${gs.currentBid}`,
+    oppWon
+      ? `Team ${ot} hit target! Won ${gs.tricksWon[ot]} tricks (target 5) → +5`
+      : `Team ${ot} missed target! Won ${gs.tricksWon[ot]} tricks (target 5) → -5`,
+  ].join(' | ');
+
+  io.to(room.code).emit('roundEnd',{
+    tricksWon:  gs.tricksWon,
+    bid:        gs.currentBid,
+    bidder:     gs.currentBidder,
+    bidderTeam: ct,
+    oppTarget:  OPP_TARGET,
+    roundScore: rs,
+    totalScores:gs.scores,
+    message:    msg,
+    powerCard:  gs.powerCard?.card ?? null,
+  });
+
+  // Game over check — BOTH teams' scores are checked
+  if(gs.scores.A >= gs.matchTarget || gs.scores.B >= gs.matchTarget){
+    // Winner is the team with more points (in case both cross at the same round)
+    const winner = gs.scores.A >= gs.scores.B ? 'A' : 'B';
+    gs.phase = 'gameOver';
     setTimeout(()=>io.to(room.code).emit('gameOver',{winner,scores:gs.scores}),3500);
   }
 }
