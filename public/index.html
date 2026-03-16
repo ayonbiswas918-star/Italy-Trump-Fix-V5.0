@@ -269,82 +269,55 @@ html,body{
 .nc-t.A{color:var(--ta)}.nc-t.B{color:var(--tb)}
 .nc-tr{font-size:.5rem;color:rgba(255,255,255,.4);font-weight:600}
 
-/* ── CENTER TRICK AREA ── */
-/* Oval casino table in the exact center */
-.center-area{
-  position:absolute;
-  top:50%;left:50%;
-  transform:translate(-50%,-50%);
-  z-index:10;
-  display:flex;align-items:center;gap:10px}
+/* ── TRICK SLOTS — absolute on felt, one per player direction ── */
+.ts{
+  position:absolute;z-index:15;
+  display:flex;align-items:center;justify-content:center;
+  width:56px;height:80px}
+/* Each card appears in the zone between the player and screen center */
+#ts-t{top:22%;left:50%;transform:translateX(-50%)}
+#ts-b{bottom:22%;left:50%;transform:translateX(-50%)}
+#ts-l{left:22%;top:50%;transform:translateY(-50%)}
+#ts-r{right:22%;top:50%;transform:translateY(-50%)}
 
-.table-oval{
-  width:clamp(200px,30vw,320px);
-  height:clamp(140px,20vw,220px);
-  border-radius:50%;
-  flex-shrink:0;
-  position:relative;overflow:hidden;
-  background:
-    radial-gradient(ellipse at 33% 30%,rgba(255,255,255,.12) 0%,transparent 45%),
-    radial-gradient(ellipse at center,#189040 0%,#0e6030 40%,#083d1e 70%,#041208 100%);
-  border:clamp(5px,1.2vw,9px) solid var(--rim-inner);
-  box-shadow:
-    inset 0 0 30px rgba(0,0,0,.6),
-    inset 4px 4px 16px rgba(255,255,255,.06),
-    0 0 0 clamp(2px,.5vw,4px) var(--rim-shine),
-    0 0 0 clamp(4px,.9vw,7px) var(--rim-outer),
-    0 10px 40px rgba(0,0,0,.9),
-    0 0 80px rgba(8,61,30,.5)}
-.table-oval::before{
-  content:'';position:absolute;inset:0;border-radius:50%;
-  background:
-    repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(0,0,0,.06) 4px,rgba(0,0,0,.06) 5px),
-    repeating-linear-gradient(-45deg,transparent,transparent 4px,rgba(255,255,255,.02) 4px,rgba(255,255,255,.02) 5px);
-  pointer-events:none}
-.table-oval::after{
-  content:'';position:absolute;inset:0;border-radius:50%;
-  background:radial-gradient(ellipse at 28% 22%,rgba(255,255,255,.09) 0%,transparent 50%);
-  pointer-events:none}
+/* Subtle center glow dot */
+.center-dot{
+  position:absolute;z-index:10;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  width:16px;height:16px;border-radius:50%;
+  background:rgba(200,148,26,.12);border:1px solid rgba(200,148,26,.18);
+  box-shadow:0 0 18px rgba(200,148,26,.08);pointer-events:none}
+.center-dot.wflash{animation:dotWin .65s ease-out}
+@keyframes dotWin{
+  0%{background:rgba(200,148,26,.12);box-shadow:0 0 18px rgba(200,148,26,.08)}
+  30%{background:rgba(200,148,26,.55);box-shadow:0 0 55px rgba(200,148,26,.8),0 0 100px rgba(200,148,26,.25)}
+  100%{background:rgba(200,148,26,.12);box-shadow:0 0 18px rgba(200,148,26,.08)}}
 
-/* Trick slots inside oval */
-.trick-ring{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2}
-.slots{position:relative;width:70%;height:72%}
-.ts{position:absolute;display:flex;align-items:center;justify-content:center}
-.ts.t{top:0;left:50%;transform:translateX(-50%)}
-.ts.b{bottom:0;left:50%;transform:translateX(-50%)}
-.ts.l{left:0;top:50%;transform:translateY(-50%)}
-.ts.r{right:0;top:50%;transform:translateY(-50%)}
-
-/* Table win pulse */
-.table-oval.wflash{animation:tWin .6s ease-out}
-@keyframes tWin{
-  0%,100%{}
-  40%{box-shadow:inset 0 0 30px rgba(0,0,0,.6),0 0 0 4px var(--gold2),0 0 60px rgba(200,148,26,.7),0 10px 40px rgba(0,0,0,.9)}}
-
-/* ── TRUMP PANEL (right of table oval) ── */
+/* ── TRUMP PANEL — floating badge top-right ── */
 .trump-panel{
-  display:flex;flex-direction:column;align-items:center;gap:5px;
-  background:rgba(0,0,0,.7);border:1px solid rgba(200,148,26,.25);
-  border-radius:12px;padding:7px 9px;flex-shrink:0;
+  position:absolute;top:8px;right:8px;z-index:30;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  background:rgba(0,0,0,.72);border:1px solid rgba(200,148,26,.28);
+  border-radius:12px;padding:7px 9px;
   box-shadow:0 4px 20px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.04)}
 .tp-lbl{font-size:.54rem;text-transform:uppercase;letter-spacing:.15em;color:rgba(200,148,26,.55);font-weight:700}
 .tp-suit{font-size:.65rem;font-weight:700;text-align:center;color:rgba(255,255,255,.65);min-height:.8rem}
 #tp-slot{display:flex;align-items:center;justify-content:center}
 
-/* ── STATUS / TALLY (below oval) ── */
+/* ── STATUS / TALLY — just below center ── */
 .center-info{
   position:absolute;
-  bottom:calc(50% - clamp(100px,14vw,155px) - 50px);
-  left:50%;transform:translateX(-50%);
-  z-index:15;display:flex;flex-direction:column;align-items:center;gap:3px;
+  top:50%;left:50%;
+  transform:translate(-50%, calc(-50% + 50px));
+  z-index:16;display:flex;flex-direction:column;align-items:center;gap:4px;
   pointer-events:none}
 .tally{display:flex;gap:.7rem;font-size:.68rem;font-weight:800;
-  background:rgba(0,0,0,.5);border-radius:20px;padding:.2rem .75rem;
+  background:rgba(0,0,0,.52);border-radius:20px;padding:.2rem .75rem;
   border:1px solid rgba(255,255,255,.08)}
 .ta-t{color:var(--ta)}.tb-t{color:var(--tb)}.tsep{color:rgba(255,255,255,.2)}
-.status{font-size:.72rem;font-weight:600;text-align:center;color:rgba(255,255,255,.75);
-  max-width:250px;line-height:1.35;
-  background:rgba(0,0,0,.45);border-radius:12px;padding:.2rem .7rem;
+.status{font-size:.7rem;font-weight:600;text-align:center;color:rgba(255,255,255,.72);
+  max-width:230px;line-height:1.35;
+  background:rgba(0,0,0,.45);border-radius:12px;padding:.18rem .65rem;
   backdrop-filter:blur(4px)}
 
 /* ── MY HAND (bottom, full width) ── */
@@ -373,89 +346,119 @@ html,body{
    CARDS — REAL CASINO STYLE
 ══════════════════════════════════════ */
 .card{
-  background:var(--card-bg);
-  border-radius:8px;flex-shrink:0;
-  border:1px solid rgba(0,0,0,.1);
-  box-shadow:0 2px 8px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.4);
-  position:relative;overflow:hidden;
-  transform-style:preserve-3d}
+  background:#fffef5;
+  border-radius:7px;flex-shrink:0;
+  border:1px solid rgba(0,0,0,.12);
+  box-shadow:0 3px 10px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.5);
+  position:relative;overflow:hidden;transform-style:preserve-3d;
+  display:flex;flex-direction:column}
+/* Top gloss */
 .card::before{
-  content:'';position:absolute;inset:0;border-radius:8px;z-index:1;pointer-events:none;
-  background:linear-gradient(145deg,rgba(255,255,255,.55) 0%,transparent 45%,rgba(0,0,0,.04) 100%)}
-.card-face{position:absolute;inset:0;padding:4px;z-index:2;display:flex;flex-direction:column}
-.c-tl{display:flex;flex-direction:column;align-items:flex-start;line-height:1.05}
-.c-br{display:flex;flex-direction:column;align-items:flex-end;line-height:1.05;
-  position:absolute;bottom:4px;right:4px;transform:rotate(180deg)}
-.c-rank{font-family:var(--fm);font-size:.88rem;font-weight:700;line-height:1}
-.c-suit-sm{font-size:.68rem;line-height:1}
-.c-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2}
-.c-suit-big{font-size:1.75rem;line-height:1}
-/* suit colors */
-.card.r .c-rank,.card.r .c-suit-sm,.card.r .c-suit-big{color:var(--red)}
-.card.k .c-rank,.card.k .c-suit-sm,.card.k .c-suit-big{color:#111}
+  content:'';position:absolute;inset:0;border-radius:7px;pointer-events:none;z-index:5;
+  background:linear-gradient(148deg,rgba(255,255,255,.6) 0%,transparent 42%,rgba(0,0,0,.03) 100%)}
+/* Thin border inner line (real card look) */
+.card::after{
+  content:'';position:absolute;inset:3px;border-radius:4px;pointer-events:none;z-index:4;
+  border:1px solid rgba(0,0,0,.07)}
 
-/* FACE DOWN */
+/* Corner index */
+.card-corner{
+  position:absolute;z-index:6;
+  display:flex;flex-direction:column;align-items:center;line-height:1.05;gap:0}
+.card-corner-tl{top:3px;left:4px}
+.card-corner-br{bottom:3px;right:4px;transform:rotate(180deg)}
+.c-rank{font-family:'Cinzel',serif;font-size:.88rem;font-weight:700;line-height:1.1}
+.c-suit-sm{font-size:.68rem;line-height:1}
+
+/* Center pip/face area */
+.card-center-area{
+  position:absolute;inset:0;z-index:3;
+  display:flex;align-items:center;justify-content:center}
+.card-svg{width:72%;height:72%;overflow:visible}
+.card-svg-face{width:82%;height:82%}
+
+/* Suit colors */
+.card.r .c-rank,.card.r .c-suit-sm{color:#d42b2b}
+.card.k .c-rank,.card.k .c-suit-sm{color:#111}
+
+/* ── FACE DOWN BACK ── */
 .card.back{
   background:linear-gradient(158deg,#0c1540,#1a2e80,#0c1540);
-  border:1.5px solid rgba(100,140,255,.2)}
+  border:1.5px solid rgba(100,140,255,.22)}
+.card.back::before{background:linear-gradient(145deg,rgba(100,140,255,.15),transparent 50%)}
 .card.back::after{
-  content:'';position:absolute;inset:4px;border-radius:5px;z-index:2;
+  border:1px solid rgba(100,140,255,.15);
   background:
     repeating-linear-gradient(45deg,rgba(100,140,255,.07),rgba(100,140,255,.07) 3px,transparent 3px,transparent 8px),
-    repeating-linear-gradient(-45deg,rgba(100,140,255,.04),rgba(100,140,255,.04) 3px,transparent 3px,transparent 8px);
-  border:1px solid rgba(100,140,255,.12)}
-.card.back .card-face{display:none}
+    repeating-linear-gradient(-45deg,rgba(100,140,255,.04),rgba(100,140,255,.04) 3px,transparent 3px,transparent 8px)}
+.card.back .card-corner,.card.back .card-center-area{display:none}
 
-/* Size variants */
-/* Trick cards */
-.tc{width:48px;height:68px}
+/* ── SIZES ── */
+/* Trick cards on felt */
+.tc{width:52px;height:74px}
 .tc .c-rank{font-size:.82rem}
-.tc .c-suit-big{font-size:1.6rem}
-.tc .card-face{padding:3px}
+.tc .c-suit-sm{font-size:.62rem}
+.tc .card-corner-tl{top:3px;left:3px}
+.tc .card-corner-br{bottom:3px;right:3px}
 
-/* Small (back/trump panel) */
+/* Small back cards */
 .card.sm{width:38px;height:54px}
-.card.sm .c-rank{font-size:.72rem}
-.card.sm .c-suit-sm{font-size:.58rem}
-.card.sm .c-suit-big{font-size:1.35rem}
-.card.sm .card-face{padding:3px}
+.card.sm .c-rank{font-size:.7rem}
+.card.sm .c-suit-sm{font-size:.56rem}
+.card.sm .card-corner-tl{top:2px;left:3px}
+.card.sm .card-corner-br{bottom:2px;right:3px}
+.card.sm .card-svg{width:65%;height:65%}
 
-/* Med (trump panel face) */
-.card.med{width:44px;height:62px}
-.card.med .c-rank{font-size:.78rem}
-.card.med .c-suit-big{font-size:1.5rem}
+/* Medium (trump reveal) */
+.card.med{width:46px;height:64px}
+.card.med .c-rank{font-size:.76rem}
+.card.med .c-suit-sm{font-size:.6rem}
 
-/* My hand cards — big */
-.mc{width:66px;height:93px;cursor:pointer;
-  transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s,filter .15s;
-  z-index:1;transform-origin:bottom center}
-.mc .c-rank{font-size:.95rem}
+/* My hand cards — largest */
+.mc{
+  width:68px;height:96px;
+  cursor:pointer;z-index:1;transform-origin:bottom center;
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s,filter .15s}
+.mc .c-rank{font-size:.96rem}
 .mc .c-suit-sm{font-size:.72rem}
-.mc .c-suit-big{font-size:2rem}
-.mc .card-face{padding:5px}
+.mc .card-corner-tl{top:4px;left:5px}
+.mc .card-corner-br{bottom:4px;right:5px}
+.mc .card-svg{width:76%;height:76%}
 .mc:not(.inv):hover{
   transform:translateY(-28px) rotateX(12deg) scale(1.06);z-index:20;
   box-shadow:0 16px 36px rgba(0,0,0,.8),0 0 0 2px rgba(200,148,26,.45)}
 .mc.inv{filter:brightness(.35) saturate(.15);cursor:not-allowed}
 .mc.vh{animation:validPulse 1.8s ease-in-out infinite}
 @keyframes validPulse{
-  0%,100%{box-shadow:0 2px 8px rgba(0,0,0,.5),0 0 0 2px rgba(200,148,26,.45)}
-  50%{box-shadow:0 2px 8px rgba(0,0,0,.5),0 0 0 2.5px var(--gold2),0 0 20px rgba(200,148,26,.6)}}
+  0%,100%{box-shadow:0 3px 10px rgba(0,0,0,.5),0 0 0 2px rgba(200,148,26,.45)}
+  50%{box-shadow:0 3px 10px rgba(0,0,0,.5),0 0 0 2.5px var(--gold2),0 0 22px rgba(200,148,26,.6)}}
+
+/* Deal fly-in */
 .mc.dealing{animation:dealFly .35s cubic-bezier(.34,1.56,.64,1) both}
-@keyframes dealFly{from{transform:translateY(-70px) translateX(15px) rotate(-15deg) scale(.3);opacity:0}to{transform:none;opacity:1}}
+@keyframes dealFly{from{transform:translateY(-70px) translateX(12px) rotate(-15deg) scale(.3);opacity:0}to{transform:none;opacity:1}}
+
+/* Trick card play slide */
 .tc.played{animation:tcSlide .26s cubic-bezier(.34,1.56,.64,1)}
-@keyframes tcSlide{from{transform:scale(.4) translateY(-22px) rotate(-10deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes tcSlide{from{transform:scale(.4) translateY(-20px) rotate(-8deg);opacity:0}to{transform:none;opacity:1}}
+
+/* Winner flash */
 .tc.winner{animation:tcWin .5s ease-out .08s both}
 @keyframes tcWin{
-  0%{transform:none;filter:none}
-  40%{transform:scale(1.2) translateY(-7px);filter:brightness(1.6) drop-shadow(0 0 14px rgba(200,148,26,.9))}
-  100%{transform:none;filter:none}}
-.card.dragging{opacity:.35;transform:scale(1.08) rotate(4deg)}
-/* HP preview cards */
-.hp-cards .card{width:40px;height:56px;pointer-events:none}
+  0%,100%{transform:none;filter:none}
+  40%{transform:scale(1.22) translateY(-6px);filter:brightness(1.5) drop-shadow(0 0 14px rgba(200,148,26,.9))}}
+
+.card.dragging{opacity:.35;transform:scale(1.1) rotate(4deg)}
+
+/* HP preview */
+.hp-cards .card{width:42px;height:60px;pointer-events:none}
 .hp-cards .c-rank{font-size:.7rem}
-.hp-cards .c-suit-big{font-size:1.1rem}
-.hp-cards .card-face{padding:3px}
+.hp-cards .c-suit-sm{font-size:.56rem}
+.hp-cards .card-corner-tl{top:2px;left:3px}
+.hp-cards .card-corner-br{bottom:2px;right:3px}
+.hp-cards .card-svg{width:65%;height:65%}
+
+/* pwr hand */
+.pwr-hand .mc{width:56px;height:80px;margin-left:0!important}
 
 /* ══════════════════════════════════════
    GAME OVER
@@ -529,10 +532,7 @@ html,body{
 
 /* Power card */
 .pwr-hand{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-height:210px;overflow-y:auto;padding:4px}
-.pwr-hand .mc{width:54px;height:77px;margin-left:0!important;transform-origin:center}
-.pwr-hand .mc:hover{transform:translateY(-16px) rotateX(10deg) scale(1.06)}
-.pwr-hand .mc .c-suit-big{font-size:1.65rem}
-.pwr-hand .mc .c-rank{font-size:.88rem}
+
 
 /* Round end */
 .rmsg{background:rgba(200,148,26,.07);border-radius:9px;padding:.62rem .85rem;
@@ -610,12 +610,10 @@ html,body{
 @media(max-width:430px){
   .mc{width:56px;height:80px}.mc .c-suit-big{font-size:1.7rem}
   .my-hand-wrap .mc:not(:first-child){margin-left:-23px}
-  .table-oval{width:clamp(170px,48vw,240px);height:clamp(120px,34vw,170px)}
   .av{width:44px;height:44px}.av.sm{width:38px;height:38px}
 }
 @media(orientation:landscape) and (max-height:480px){
   .hud{min-height:32px;padding:.1rem .7rem}.hs .hv{font-size:1.1rem}
-  .table-oval{width:clamp(140px,28vh,200px);height:clamp(100px,20vh,145px)}
   .mc{width:52px;height:74px}.mc .c-suit-big{font-size:1.55rem}
   .my-hand-wrap .mc:not(:first-child){margin-left:-21px}
   .my-hand-wrap{bottom:40px;min-height:78px}
@@ -712,21 +710,20 @@ html,body{
       <div class="fan" id="fan-left"></div>
     </div>
 
-    <!-- CENTER oval table + trump -->
-    <div class="center-area">
-      <div class="table-oval" id="table">
-        <div class="trick-ring"><div class="slots" id="slots">
-          <div class="ts t" id="ts-t"></div>
-          <div class="ts b" id="ts-b"></div>
-          <div class="ts l" id="ts-l"></div>
-          <div class="ts r" id="ts-r"></div>
-        </div></div>
-      </div>
-      <div class="trump-panel">
-        <div class="tp-lbl">TRUMP</div>
-        <div id="tp-slot"><div class="card back sm"></div></div>
-        <div class="tp-suit" id="tp-suit">Hidden</div>
-      </div>
+    <!-- TRICK SLOTS — one per direction, absolute on felt -->
+    <div class="ts" id="ts-t"></div>
+    <div class="ts" id="ts-b"></div>
+    <div class="ts" id="ts-l"></div>
+    <div class="ts" id="ts-r"></div>
+
+    <!-- Center glow dot -->
+    <div class="center-dot" id="center-dot"></div>
+
+    <!-- Trump panel — floating top-right badge -->
+    <div class="trump-panel">
+      <div class="tp-lbl">TRUMP</div>
+      <div id="tp-slot"><div class="card back sm"></div></div>
+      <div class="tp-suit" id="tp-suit">Hidden</div>
     </div>
 
     <!-- Tally + status below table -->

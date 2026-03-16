@@ -149,15 +149,101 @@ function toggleFullscreen(){
 }
 
 // ── Real Card Builder ─────────────────────────────────
-function mkCard(card,cls=''){
-  const d=document.createElement('div');
-  d.className=`card ${COL[card.suit]} ${cls}`;
-  d.dataset.id=card.id;
-  d.innerHTML=`<div class="card-face">
-    <div class="c-tl"><div class="c-rank">${card.rank}</div><div class="c-suit-sm">${SYM[card.suit]}</div></div>
-    <div class="c-center"><span class="c-suit-big">${SYM[card.suit]}</span></div>
-    <div class="c-br"><div class="c-rank">${card.rank}</div><div class="c-suit-sm">${SYM[card.suit]}</div></div>
-  </div>`;
+// ── PIP LAYOUTS for number cards ─────────────────────
+const PIPS = {
+  'A': [[50,50,1.9]],
+  '2': [[50,20],[50,80]],
+  '3': [[50,20],[50,50],[50,80]],
+  '4': [[20,20],[80,20],[20,80],[80,80]],
+  '5': [[20,20],[80,20],[50,50],[20,80],[80,80]],
+  '6': [[20,20],[80,20],[20,50],[80,50],[20,80],[80,80]],
+  '7': [[20,20],[80,20],[50,35],[20,50],[80,50],[20,80],[80,80]],
+  '8': [[20,20],[80,20],[50,32],[20,50],[80,50],[50,68],[20,80],[80,80]],
+  '9': [[20,18],[80,18],[20,38],[80,38],[50,50],[20,62],[80,62],[20,82],[80,82]],
+  '10':[[20,15],[80,15],[50,28],[20,40],[80,40],[20,60],[80,60],[50,72],[20,85],[80,85]],
+};
+
+// Face card SVG art (simplified but recognizable)
+function faceArt(rank, suit, color) {
+  const c = color === 'r' ? '#d42b2b' : '#111';
+  const sc = color === 'r' ? '#c0392b' : '#1a1a2e';
+  const sym = SYM[suit];
+
+  if (rank === 'J') return `
+    <text x="50" y="56" text-anchor="middle" font-size="36" font-weight="900" fill="${c}" font-family="Georgia,serif" opacity=".12">${sym}</text>
+    <text x="50" y="62" text-anchor="middle" font-size="28" font-weight="700" fill="${c}" font-family="'Cinzel Decorative',serif">J</text>
+    <rect x="18" y="18" width="64" height="64" rx="4" fill="none" stroke="${c}" stroke-width="1.2" opacity=".18"/>
+    <line x1="18" y1="50" x2="82" y2="50" stroke="${c}" stroke-width=".8" opacity=".12"/>
+    <text x="50" y="47" text-anchor="middle" font-size="14" fill="${c}" opacity=".55">${sym}</text>
+    <text x="50" y="72" text-anchor="middle" font-size="8" fill="${sc}" opacity=".4" transform="rotate(180,50,67)">⚔</text>`;
+
+  if (rank === 'Q') return `
+    <text x="50" y="56" text-anchor="middle" font-size="36" font-weight="900" fill="${c}" font-family="Georgia,serif" opacity=".12">${sym}</text>
+    <text x="50" y="62" text-anchor="middle" font-size="28" font-weight="700" fill="${c}" font-family="'Cinzel Decorative',serif">Q</text>
+    <rect x="18" y="18" width="64" height="64" rx="4" fill="none" stroke="${c}" stroke-width="1.2" opacity=".18"/>
+    <circle cx="50" cy="34" r="8" fill="none" stroke="${c}" stroke-width="1" opacity=".3"/>
+    <text x="50" y="38" text-anchor="middle" font-size="10" fill="${c}" opacity=".5">♛</text>
+    <text x="50" y="72" text-anchor="middle" font-size="8" fill="${c}" opacity=".35" transform="rotate(180,50,68)">♛</text>`;
+
+  if (rank === 'K') return `
+    <text x="50" y="56" text-anchor="middle" font-size="36" font-weight="900" fill="${c}" font-family="Georgia,serif" opacity=".12">${sym}</text>
+    <text x="50" y="62" text-anchor="middle" font-size="28" font-weight="700" fill="${c}" font-family="'Cinzel Decorative',serif">K</text>
+    <rect x="18" y="18" width="64" height="64" rx="4" fill="none" stroke="${c}" stroke-width="1.5" opacity=".2"/>
+    <rect x="24" y="24" width="52" height="52" rx="2" fill="none" stroke="${c}" stroke-width=".6" opacity=".12"/>
+    <text x="50" y="38" text-anchor="middle" font-size="12" fill="${c}" opacity=".55">♔</text>
+    <text x="50" y="52" text-anchor="middle" font-size="10" fill="${c}" opacity=".3">⚔ ⚔</text>
+    <text x="50" y="72" text-anchor="middle" font-size="12" fill="${c}" opacity=".4" transform="rotate(180,50,67)">♔</text>`;
+
+  return '';
+}
+
+function mkCard(card, cls=''){
+  const d = document.createElement('div');
+  d.className = `card ${COL[card.suit]} ${cls}`;
+  d.dataset.id = card.id;
+  const sym = SYM[card.suit];
+  const col = COL[card.suit];
+  const fill = col === 'r' ? '#d42b2b' : '#111111';
+  const isFace = ['J','Q','K'].includes(card.rank);
+  const pips = PIPS[card.rank];
+
+  let centerSVG = '';
+  if (card.rank === 'A') {
+    // Big ace pip
+    centerSVG = `<svg class="card-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <text x="50" y="66" text-anchor="middle" font-size="52" fill="${fill}">${sym}</text>
+    </svg>`;
+  } else if (isFace) {
+    // Face card — decorative SVG
+    centerSVG = `<svg class="card-svg card-svg-face" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="100" height="100" fill="${col==='r'?'rgba(212,43,43,.04)':'rgba(17,17,17,.03)'}"/>
+      ${faceArt(card.rank, card.suit, col)}
+    </svg>`;
+  } else if (pips) {
+    // Number card — pip layout
+    const pipSize = card.rank === '10' ? 13 : card.rank === '9' ? 14 : 15;
+    const pipsSVG = pips.map(([x,y,scale]) => {
+      const fs = scale ? pipSize*scale : pipSize;
+      const flip = y > 50;
+      return `<text x="${x}" y="${y + fs*0.38}" text-anchor="middle"
+        font-size="${fs}" fill="${fill}"
+        transform="${flip ? `rotate(180,${x},${y})` : ''}">${sym}</text>`;
+    }).join('');
+    centerSVG = `<svg class="card-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      ${pipsSVG}
+    </svg>`;
+  }
+
+  d.innerHTML = `
+    <div class="card-corner card-corner-tl">
+      <div class="c-rank">${card.rank}</div>
+      <div class="c-suit-sm">${sym}</div>
+    </div>
+    <div class="card-center-area">${centerSVG}</div>
+    <div class="card-corner card-corner-br">
+      <div class="c-rank">${card.rank}</div>
+      <div class="c-suit-sm">${sym}</div>
+    </div>`;
   return d;
 }
 function mkBack(cls=''){const d=document.createElement('div');d.className=`card back ${cls}`;return d;}
@@ -510,7 +596,7 @@ socket.on('trumpRevealed',({trumpSuit:ts,powerCard,revealedByName,bidderPos})=>{
 socket.on('trickComplete',({winnerPos,winnerName,winnerTeam,tricksWon,trickNumber})=>{
   flashWinner(winnerPos);
   setTimeout(()=>sfxWin(),120);setTimeout(()=>updateTricks(tricksWon),150);
-  const tbl=$('table');if(tbl){tbl.classList.add('wflash');setTimeout(()=>tbl.classList.remove('wflash'),700);}
+  const dot=$('center-dot');if(dot){dot.classList.add('wflash');setTimeout(()=>dot.classList.remove('wflash'),700);}
   $('status').textContent=`${winnerName} (Team ${winnerTeam}) wins trick ${trickNumber}!`;toast(`${winnerName} wins trick ${trickNumber}! 🎉`,2000);
 });
 socket.on('newTrickStarting',({trickNumber,leader,leaderName})=>{
