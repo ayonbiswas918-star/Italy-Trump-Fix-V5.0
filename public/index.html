@@ -536,13 +536,15 @@ html,body{
 
 /* Round end */
 .rmsg{background:rgba(200,148,26,.07);border-radius:9px;padding:.62rem .85rem;
-  font-size:.86rem;font-weight:600;text-align:center;border:1px solid rgba(200,148,26,.18)}
+  font-size:.8rem;font-weight:600;text-align:center;border:1px solid rgba(200,148,26,.18);
+  display:flex;flex-direction:column;gap:3px;line-height:1.4}
 .sgrid{display:grid;grid-template-columns:1fr 1fr;gap:.52rem}
 .stile{background:rgba(255,255,255,.03);border-radius:9px;padding:.62rem;text-align:center;
   border:1px solid rgba(255,255,255,.07)}
 .sl{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.32);font-weight:700}
 .sv{font-family:var(--fm);font-size:1.3rem;letter-spacing:.04em}
 .st{font-size:.72rem;color:rgba(255,255,255,.35);font-weight:600}
+.st-tgt{font-size:.65rem;font-weight:600;margin-top:1px;min-height:.8rem}
 .stile.a .sv{color:var(--ta)}.stile.b .sv{color:var(--tb)}
 .plus{color:#80cbc4}.minus{color:#ef9a9a}
 .pvrev{display:flex;align-items:center;gap:.65rem;background:rgba(0,0,0,.18);
@@ -830,8 +832,18 @@ html,body{
     <div class="rmsg" id="re-msg"></div>
     <div class="pvrev" id="re-pv" style="display:none"><span class="pvl">Trump was:</span><div id="re-pc"></div></div>
     <div class="sgrid">
-      <div class="stile a"><div class="sl">Team A</div><div class="sv" id="re-ra">+0</div><div class="st" id="re-ta">Total: 0</div></div>
-      <div class="stile b"><div class="sl">Team B</div><div class="sv" id="re-rb">+0</div><div class="st" id="re-tb">Total: 0</div></div>
+      <div class="stile a">
+        <div class="sl">Team A</div>
+        <div class="sv" id="re-ra">+0</div>
+        <div class="st-tgt" id="re-tgta"></div>
+        <div class="st" id="re-ta">Total: 0</div>
+      </div>
+      <div class="stile b">
+        <div class="sl">Team B</div>
+        <div class="sv" id="re-rb">+0</div>
+        <div class="st-tgt" id="re-tgtb"></div>
+        <div class="st" id="re-tb">Total: 0</div>
+      </div>
     </div>
     <div class="rinfo" id="re-ri"></div>
     <button class="btn btn-green" onclick="onReadyNext()">Ready for Next Round</button>

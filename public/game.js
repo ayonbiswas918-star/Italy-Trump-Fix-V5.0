@@ -447,14 +447,36 @@ function openPowerPanel(hand){
 
 // ── Round end ─────────────────────────────────────────
 function openRoundEnd(data){
-  const{roundScore,totalScores,message,powerCard}=data;
-  $('re-title').textContent=`Round ${roundNum} Over`;$('re-msg').textContent=message;
+  const{roundScore,totalScores,message,powerCard,bidderTeam,bid,oppTarget,tricksWon}=data;
+  const oppTeam = bidderTeam==='A'?'B':'A';
+
+  $('re-title').textContent=`Round ${roundNum} Over`;
+
+  // Two-line message: one per team
+  const parts = message.split(' | ');
+  $('re-msg').innerHTML = parts.map(p=>`<div>${p}</div>`).join('');
+
   if(powerCard){$('re-pc').innerHTML='';$('re-pc').appendChild(mkCard(powerCard));$('re-pv').style.display='flex';}
   else $('re-pv').style.display='none';
+
   ['a','b'].forEach(t=>{
-    const T=t.toUpperCase(),v=roundScore[T];
-    const el=$(`re-r${t}`);el.textContent=v>=0?`+${v}`:`${v}`;
+    const T=t.toUpperCase();
+    const v=roundScore[T];
+    const isCaller = T===bidderTeam;
+    const target   = isCaller ? bid : (oppTarget||5);
+    const tricks   = tricksWon ? tricksWon[T] : '?';
+
+    // Round score display
+    const el=$(`re-r${t}`);
+    el.textContent=v>=0?`+${v}`:`${v}`;
     el.className=`sv ${v>0?'plus':v<0?'minus':''}`;
+
+    // Target info under score
+    const tgt=$(`re-tgt${t}`);
+    if(tgt){
+      tgt.textContent=`Target ${target} · Got ${tricks} tricks`;
+      tgt.style.color=v>0?'rgba(128,203,196,.9)':'rgba(239,154,154,.9)';
+    }
     $(`re-t${t}`).textContent=`Total: ${totalScores[T]}`;
   });
   $('re-ri').textContent='';showOv('ov-round');
