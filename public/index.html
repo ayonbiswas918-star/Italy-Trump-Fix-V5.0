@@ -235,6 +235,7 @@ html,body{
 .av.B{background:conic-gradient(from 0deg,#f55a5a,#c82e2e,#6e0a0a,#c82e2e,#f55a5a);
   box-shadow:0 0 0 2px rgba(255,255,255,.15),0 0 16px rgba(245,90,90,.4),0 4px 12px rgba(0,0,0,.8)}
 .av.sm{width:44px;height:44px}
+.av.offline{opacity:.55;filter:grayscale(.6)}
 .av.active{animation:avGlow .85s ease-in-out infinite}
 @keyframes avGlow{
   0%,100%{box-shadow:0 0 0 2px var(--gold2),0 0 18px rgba(200,148,26,.5),0 4px 12px rgba(0,0,0,.8)}
@@ -757,6 +758,16 @@ html,body{
 
     <!-- Reveal trump btn -->
     <button id="btn-trump" onclick="onRevealTrump()">🔮 Reveal Trump</button>
+
+    <!-- Discard all btn (no face card in initial 5) -->
+    <button id="btn-discard" onclick="onDiscardAll()" style="display:none;
+      position:absolute;bottom:198px;right:10px;z-index:40;
+      background:linear-gradient(135deg,#ff7043,#bf360c);color:#fff;
+      border:none;border-radius:50px;font-family:var(--fm);font-size:.78rem;letter-spacing:.05em;
+      padding:.5rem 1rem;cursor:pointer;align-items:center;gap:5px;
+      box-shadow:0 3px 0 rgba(0,0,0,.4),0 0 18px rgba(255,112,67,.5)">
+      🔄 Discard All
+    </button>
 
     <!-- Controls -->
     <div class="game-ctrl">
