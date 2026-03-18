@@ -654,7 +654,7 @@ io.on('connection', socket => {
     // IMPORTANT: Only the callingStart player (first card receiver) can discard
     if(pos !== gs.callingStart) return socket.emit('err','Only the first card receiver can discard');
     if(gs.callingCount > 0 || gs.currentBid > 0) return socket.emit('err','Cannot discard after bidding has started');
-    if(gs.discardedFlags[pos]) return socket.emit('err','You already discarded once this round');
+    // No limit on discards — player can keep redrawing until they get a face card/Ace
 
     const hand = gs.hands[pos];
     // Validate: no face card/Ace in initial 5 (only allowed if hand has 5 cards)
@@ -866,6 +866,30 @@ io.on('connection', socket => {
   });
 
   // ── Disconnect ───────────────────────────────
+  socket.on('kickPlayer',({targetPos})=>{
+    const room=rooms.get(socket.data.roomCode);if(!room)return;
+    if(socket.data.sessionId!==room.hostSid)return socket.emit('err','Only host can kick');
+    if(room.gameState&&!['roundEnd','gameOver'].includes(room.gameState.phase))
+      return socket.emit('err','Cannot kick during game');
+    const target=room.players.find(p=>p.position===targetPos);
+    if(!target||target.sessionId===room.hostSid)return;
+    const ts=io.sockets.sockets.get(target.id);
+    if(ts){ts.emit('kicked',{});ts.leave(room.code);}
+    // Remove from players list, shift positions
+    room.players=room.players.filter(p=>p.position!==targetPos);
+    // Re-assign positions sequentially
+    room.players.forEach((p,i)=>{
+      const oldPos=p.position;p.position=i;
+      room.emojis[i]=room.emojis[oldPos];
+      const ps=io.sockets.sockets.get(p.id);
+      if(ps){ps.data.position=i;if(oldPos!==i)ps.emit('yourPosition',{position:i});}
+    });
+    // Clean up extra emoji keys
+    Object.keys(room.emojis).forEach(k=>{if(parseInt(k)>=room.players.length)delete room.emojis[k];});
+    io.to(room.code).emit('seatsUpdated',{players:pi(room),emojis:room.emojis});
+    io.to(room.code).emit('playerKicked',{name:target.name});
+  });
+
   socket.on('disconnect',()=>{
     const { roomCode, position, sessionId } = socket.data;
     if(!roomCode) return;
