@@ -651,13 +651,15 @@ io.on('connection', socket => {
 
     // Only allowed during calling phase, before any bidding, once per round
     if(gs.phase !== 'calling') return;
+    // IMPORTANT: Only the callingStart player (first card receiver) can discard
+    if(pos !== gs.callingStart) return socket.emit('err','Only the first card receiver can discard');
     if(gs.callingCount > 0 || gs.currentBid > 0) return socket.emit('err','Cannot discard after bidding has started');
     if(gs.discardedFlags[pos]) return socket.emit('err','You already discarded once this round');
 
     const hand = gs.hands[pos];
-    // Validate: no face card in initial 5 (only allowed if hand has 5 cards)
+    // Validate: no face card/Ace in initial 5 (only allowed if hand has 5 cards)
     if(hand.length !== 5) return;
-    if(hasFaceCard(hand)) return socket.emit('err','You have a face card — cannot discard');
+    if(hasFaceCard(hand)) return socket.emit('err','You have a face card or Ace — cannot discard');
 
     // Mark as discarded
     gs.discardedFlags[pos] = true;
