@@ -18,7 +18,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const RANKS    = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
 const SUITS    = ['spades','hearts','diamonds','clubs'];
 const RANK_VAL = {'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14};
-const FACE     = new Set(['J','Q','K']);
+const FACE     = new Set(['A','J','Q','K']);
 const OPP_TARGET = 5;
 
 // ─────────────────────────────────────────────
@@ -38,7 +38,9 @@ function genCode(){let c;do{c=Math.random().toString(36).substr(2,6).toUpperCase
 const teamOf  = p=>p%2===0?'A':'B';
 const otherTeam=t=>t==='A'?'B':'A';
 function sortHand(h){
-  const so={spades:0,hearts:1,diamonds:2,clubs:3};
+  // Alternating color order: Spades(black) | Hearts(red) | Clubs(black) | Diamonds(red)
+  // This way two black groups are separated by red groups — easy to read at a glance
+  const so={spades:0,hearts:1,clubs:2,diamonds:3};
   return [...h].sort((a,b)=>a.suit!==b.suit?so[a.suit]-so[b.suit]:RANK_VAL[b.rank]-RANK_VAL[a.rank]);
 }
 function cardBeats(ch,cur,lead,trump,rev){
@@ -219,16 +221,10 @@ function sendStateToPlayer(room, pos){
 // ─────────────────────────────────────────────
 function validCards(gs,pos,hand){
   if(gs.currentTrick.length===0) return hand;
+  // Must follow the lead suit if possible
   const lead=hand.filter(c=>c.suit===gs.leadSuit);
   if(lead.length>0) return lead;
-  if(gs.trumpRevealed){
-    const tc=hand.filter(c=>c.suit===gs.trumpSuit);
-    if(tc.length>0){
-      const w=trickWin(gs.currentTrick,gs.leadSuit,gs.trumpSuit,true);
-      if(w!==null && teamOf(w)===teamOf(pos)) return hand;
-      return tc;
-    }
-  }
+  // No lead suit cards → player can play ANY card freely (trump is optional, not forced)
   return hand;
 }
 function trickWin(trick,lead,trump,rev){
@@ -640,7 +636,9 @@ io.on('connection', socket => {
   socket.on('startGame',()=>{
     const room = rooms.get(socket.data.roomCode);
     if(!room || room.players.length !== 4) return;
-    if(socket.data.sessionId !== room.hostSid) return socket.emit('err','Only the host can start');
+    // Host = the player at position 0
+    const p0 = room.players.find(p=>p.position===0);
+    if(!p0 || p0.id !== socket.id) return socket.emit('err','Only Seat 1 can start');
     beginRound(room);
   });
 
@@ -829,22 +827,28 @@ io.on('connection', socket => {
   });
 
   // ── Ready for Next Round ─────────────────────
-  // Uses sessionId so it works after reconnect
+  // Uses player position (0-3) — stable across reconnects, never duplicates
   socket.on('readyForNextRound',()=>{
     const room = rooms.get(socket.data.roomCode);
-    if(!room?.gameState || room.gameState.phase !== 'roundEnd') return;
+    if(!room?.gameState) return;
+    if(room.gameState.phase !== 'roundEnd') return;
 
-    const sid = socket.data.sessionId || socket.id;
-    room.readySet.add(sid);  // sessionId-based, stable across reconnect
+    const pos = socket.data.position;
+    if(pos === undefined || pos < 0) return;
+    room.readySet.add(pos);
+
+    // Count only ONLINE players — offline players are skipped
+    const onlineCount = room.players.filter(p => io.sockets.sockets.has(p.id)).length;
+    const needed = Math.max(1, onlineCount);  // at least 1
 
     io.to(room.code).emit('readyCount',{
       ready: room.readySet.size,
-      total: room.players.length,
+      total: needed,
     });
 
-    if(room.readySet.size >= room.players.length){
+    if(room.readySet.size >= needed){
       room.readySet.clear();
-      room.gameState.roundNumber++;
+      room.gameState.roundNumber = (room.gameState.roundNumber || 1) + 1;
       beginRound(room);
     }
   });
