@@ -371,14 +371,15 @@ html,body{
 
 /* ── FACE DOWN BACK ── */
 .card.back{
-  background:linear-gradient(158deg,#0c1540,#1a2e80,#0c1540);
-  border:1.5px solid rgba(100,140,255,.22)}
+  background:linear-gradient(135deg,#e8f0fe 0%,#d0e4f7 40%,#b8d4f0 100%);
+  border:1.5px solid rgba(100,140,220,.35)}
 .card.back::after{
-  content:'';position:absolute;inset:4px;border-radius:5px;
+  content:'';position:absolute;inset:5px;border-radius:4px;
   background:
-    repeating-linear-gradient(45deg,rgba(100,140,255,.07),rgba(100,140,255,.07) 3px,transparent 3px,transparent 8px),
-    repeating-linear-gradient(-45deg,rgba(100,140,255,.04),rgba(100,140,255,.04) 3px,transparent 3px,transparent 8px);
-  border:1px solid rgba(100,140,255,.12)}
+    repeating-linear-gradient(45deg,rgba(70,130,210,.1),rgba(70,130,210,.1) 3px,transparent 3px,transparent 9px),
+    repeating-linear-gradient(-45deg,rgba(70,130,210,.07),rgba(70,130,210,.07) 3px,transparent 3px,transparent 9px);
+  border:1.5px solid rgba(70,120,200,.25);
+  box-shadow:inset 0 0 8px rgba(100,150,220,.15)}
 
 /* ── SIZES ── */
 /* Trick cards on felt */
@@ -582,6 +583,60 @@ html,body{
   #btn-trump{bottom:118px}
   .cb{width:18px;height:26px}.fan .cb:not(:first-child){margin-left:-13px}
 }
+
+/* ── TOP INFO BAR ── */
+.top-info-bar{
+  flex-shrink:0;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:5px 10px 4px;
+  background:rgba(0,0,0,.45);
+  border-bottom:1px solid rgba(200,148,26,.15);
+  z-index:20;position:relative}
+.tib-tricks{
+  display:flex;align-items:center;gap:.5rem;font-size:.72rem;font-weight:800}
+.tib-sep{color:rgba(255,255,255,.25);font-size:.7rem}
+.tib-tn{color:rgba(255,255,255,.38);font-size:.68rem;font-weight:700}
+.ta-t{color:var(--ta)}.tb-t{color:var(--tb)}
+.tib-bid{font-size:.68rem;color:rgba(200,148,26,.75);font-weight:700;min-height:.85rem;letter-spacing:.04em}
+/* Whose turn — larger, light color */
+.tib-turn{
+  font-family:var(--fm);font-size:.88rem;font-weight:700;
+  color:#fff;letter-spacing:.04em;text-align:center;
+  text-shadow:0 0 14px rgba(200,148,26,.4);
+  min-height:1.1rem}
+
+/* ── BOTTOM ROW (me): avatar left, hand right ── */
+.bottom-row{
+  display:flex;align-items:flex-end;gap:8px;
+  width:100%;padding:0 6px 2px}
+.bottom-identity{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  flex-shrink:0;padding-bottom:4px}
+.my-hand-wrap{
+  display:flex;align-items:flex-end;justify-content:flex-start;
+  overflow:visible;min-height:96px;flex:1}
+.my-hand-wrap .mc:not(:first-child){margin-left:-28px}
+
+/* ── TOP ROW (teammate): avatar left, name, fan right ── */
+.top-row{
+  display:flex;align-items:center;gap:6px}
+
+/* ── DISCARD BUTTON inside bid panel ── */
+.btn-discard-panel{
+  width:100%;padding:.6rem;
+  background:linear-gradient(135deg,#ff7043,#bf360c);color:#fff;
+  border:none;border-radius:12px;font-family:var(--fm);font-size:.88rem;
+  letter-spacing:.04em;cursor:pointer;
+  box-shadow:0 3px 0 rgba(0,0,0,.4),0 0 15px rgba(255,112,67,.35);
+  transition:all .14s}
+.btn-discard-panel:hover{filter:brightness(1.1)}
+.btn-discard-panel:active{transform:translateY(2px)}
+
+/* Remove old center-info absolute positioning since it's now in top bar */
+.center-info{display:none}
+
+/* Status/tally now inside top-info-bar — keep old selectors working */
+
 </style>
 </head>
 <body>
@@ -648,19 +703,42 @@ html,body{
 
   <!-- HUD -->
   <div class="hud">
-    <div class="hs a"><span class="hl">Team A · P1+P3</span><span class="hv" id="sc-a">0</span></div>
-    <div class="hc"><span class="hr" id="h-round">Round 1</span><span class="ht" id="h-target">Target: 30</span></div>
-    <div class="hs b"><span class="hl">Team B · P2+P4</span><span class="hv" id="sc-b">0</span></div>
+    <div class="hs a">
+      <span class="hl" id="hud-names-a">Team A</span>
+      <span class="hv" id="sc-a">0</span>
+    </div>
+    <div class="hc">
+      <span class="hr" id="h-round">Round 1</span>
+      <span class="ht" id="h-target">Target: 30</span>
+    </div>
+    <div class="hs b">
+      <span class="hl" id="hud-names-b">Team B</span>
+      <span class="hv" id="sc-b">0</span>
+    </div>
+  </div>
+
+  <!-- Top info bar: tricks, bid, turn -->
+  <div class="top-info-bar">
+    <div class="tib-tricks">
+      <span class="ta-t">A: <b id="ta">0</b></span>
+      <span class="tib-sep">·</span>
+      <span class="tb-t">B: <b id="tb">0</b></span>
+      <span class="tib-tn" id="tn"></span>
+    </div>
+    <div class="tib-bid" id="tib-bid"></div>
+    <div class="tib-turn" id="status">Welcome!</div>
   </div>
 
   <!-- Full-screen game table -->
   <div class="game-table" id="game-table">
 
-    <!-- TOP player -->
+    <!-- TOP player: avatar+name LEFT, fan RIGHT -->
     <div class="ppod ppod-top" id="ppod-top">
-      <div class="av A" id="av-top"><div class="av-inner" id="av-top-l">?</div><div class="dcrown" id="dc-top">👑</div></div>
-      <div class="fan" id="fan-top"></div>
-      <div class="nchip"><div class="nc-n" id="nm-top">—</div><div class="nc-t A" id="nt-top">—</div><div class="nc-tr" id="ntr-top"></div></div>
+      <div class="top-row">
+        <div class="av A" id="av-top"><div class="av-inner" id="av-top-l">?</div><div class="dcrown" id="dc-top">👑</div></div>
+        <div class="nchip"><div class="nc-n" id="nm-top">—</div><div class="nc-t A" id="nt-top">—</div><div class="nc-tr" id="ntr-top"></div></div>
+        <div class="fan" id="fan-top"></div>
+      </div>
     </div>
 
     <!-- LEFT player -->
@@ -686,16 +764,7 @@ html,body{
       <div class="tp-suit" id="tp-suit">Hidden</div>
     </div>
 
-    <!-- Tally + status below table -->
-    <div class="center-info">
-      <div class="tally">
-        <span class="ta-t">A:<b id="ta">0</b></span>
-        <span class="tsep">|</span>
-        <span class="tb-t">B:<b id="tb">0</b></span>
-        <span class="tsep" id="tn" style="color:rgba(255,255,255,.35)"></span>
-      </div>
-      <div class="status" id="status">Welcome!</div>
-    </div>
+    <!-- Tally + status: now shown in top-bar, this placeholder stays empty -->
 
     <!-- RIGHT player -->
     <div class="ppod ppod-right" id="ppod-right">
@@ -704,27 +773,21 @@ html,body{
       <div class="nchip"><div class="nc-n" id="nm-right">—</div><div class="nc-t B" id="nt-right">—</div><div class="nc-tr" id="ntr-right"></div></div>
     </div>
 
-    <!-- BOTTOM (me) -->
+    <!-- BOTTOM (me): avatar+name LEFT, hand RIGHT -->
     <div class="ppod ppod-bottom" id="ppod-bottom">
-      <div class="my-hand-wrap" id="my-hand"></div>
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
-        <div class="av A sm" id="av-me"><div class="av-inner" id="av-me-l">?</div><div class="dcrown" id="dc-bottom">👑</div></div>
-        <div class="nchip"><div class="nc-n" id="nm-bottom">You</div><div class="nc-t A" id="nt-bottom">—</div><div class="nc-tr" id="ntr-bottom"></div></div>
+      <div class="bottom-row">
+        <div class="bottom-identity">
+          <div class="av A sm" id="av-me"><div class="av-inner" id="av-me-l">?</div><div class="dcrown" id="dc-bottom">👑</div></div>
+          <div class="nchip"><div class="nc-n" id="nm-bottom">You</div><div class="nc-t A" id="nt-bottom">—</div><div class="nc-tr" id="ntr-bottom"></div></div>
+        </div>
+        <div class="my-hand-wrap" id="my-hand"></div>
       </div>
     </div>
 
     <!-- Reveal trump btn -->
     <button id="btn-trump" onclick="onRevealTrump()">🔮 Reveal Trump</button>
 
-    <!-- Discard all btn (no face card in initial 5) -->
-    <button id="btn-discard" onclick="onDiscardAll()" style="display:none;
-      position:absolute;bottom:198px;right:10px;z-index:40;
-      background:linear-gradient(135deg,#ff7043,#bf360c);color:#fff;
-      border:none;border-radius:50px;font-family:var(--fm);font-size:.78rem;letter-spacing:.05em;
-      padding:.5rem 1rem;cursor:pointer;align-items:center;gap:5px;
-      box-shadow:0 3px 0 rgba(0,0,0,.4),0 0 18px rgba(255,112,67,.5)">
-      🔄 Discard All
-    </button>
+
 
     <!-- Controls -->
     <div class="game-ctrl">
@@ -783,6 +846,15 @@ html,body{
     </div>
     <button class="bn-nil" id="bnil" onclick="placeBid('nil')">Pass (Nil)</button>
     <div class="hprev"><div class="hp-lbl">Your Cards</div><div class="hp-cards" id="hp-cards"></div></div>
+    <!-- Discard all: only shown if player has no face card/ace in first 5 -->
+    <div id="discard-wrap" style="display:none">
+      <div style="font-size:.7rem;color:rgba(255,180,100,.7);text-align:center;margin-bottom:4px;font-weight:600">
+        ⚠ No face card or Ace — you may discard your hand
+      </div>
+      <button id="btn-discard" class="btn-discard-panel" onclick="onDiscardAll()">
+        🔄 Discard All &amp; Get New Cards
+      </button>
+    </div>
   </div>
 </div>
 

@@ -228,7 +228,7 @@ function renderHand(animate=false){
 
 // ── Discard All ───────────────────────────────
 function setDiscardBtn(show){
-  const b=$('btn-discard');if(b){b.style.display=show?'flex':'none';}
+  const w=$('discard-wrap');if(w)w.style.display=show?'block':'none';
 }
 function onDiscardAll(){
   socket.emit('discardInitialHand');
@@ -291,6 +291,11 @@ function renderPlayers(ps){
     const nn=$(`nm-${s}`);if(nn)nn.textContent=isMe?p.name+' (You)':p.name+(p.online===false?' 🔴':'');
     const nt=$(`nt-${s}`);if(nt){nt.textContent=`Team ${tm}`;nt.className=`nc-t ${tm}`;}
   });
+  // Update HUD with actual player names
+  const teamA=ps.filter(p=>p.position%2===0).map(p=>p.name.split(' ')[0]);
+  const teamB=ps.filter(p=>p.position%2===1).map(p=>p.name.split(' ')[0]);
+  const ha=$('hud-names-a');if(ha)ha.textContent=teamA.length?teamA.join(' + '):'Team A';
+  const hb=$('hud-names-b');if(hb)hb.textContent=teamB.length?teamB.join(' + '):'Team B';
 }
 function markDealer(dp){
   ['top','left','right','bottom'].forEach(s=>{
@@ -311,6 +316,13 @@ function updateTricks(tw){
     const s=p.position===myPos?'bottom':vslot(p.position);
     const e=$(`ntr-${s}`);if(e)e.textContent=`${tw[teamOf(p.position)]} tricks`;
   });
+}
+function updateTrickNum(num){
+  const el=$('tn');if(el)el.textContent=num?`· Trick ${num}/13`:'';
+}
+function updateBidInfo(bidderName,bid){
+  const el=$('tib-bid');
+  if(el)el.textContent=bidderName?`${bidderName} bid ${bid}`:'';
 }
 function updateHUD(){
   $('sc-a').textContent=scores.A;$('sc-b').textContent=scores.B;
@@ -493,28 +505,35 @@ socket.on('gameReset',({players:ps})=>{
 
 // Round
 socket.on('roundBegin',({roundNumber:rn,scores:sc,players:ps,matchTarget:mt,
-  dealerPos:dp,dealerName,firstActiveName,emojis,isReconnect})=>{
+  dealerPos:dp,dealerName,firstActiveName,firstActivePos,emojis,isReconnect})=>{
   roundNum=rn;scores=sc;matchTarget=mt;players=ps;dealerPos=dp;
   myHand=[];validIds=[];isMyTurn=false;canDiscardAll=false;
   trumpSuit=null;trumpRevealed=false;leadSuit=null;bidLog=[];handCounts={0:0,1:0,2:0,3:0};
   applyEmojis(emojis);
+  // Store who gets to discard (only the first card receiver = callingStart)
+  window._callingStartPos = firstActivePos;
   if(!isReconnect){
     hideAllOv();stopBidTimer();
   }
   showScreen('screen-game');
   clearTricks();updateHUD();renderPlayers(ps);markDealer(dp);
   updateTricks({A:0,B:0});updateTrumpPanel();setRevealBtn(false);setDiscardBtn(false);
-  $('tn').textContent='Trick 1/13';$('status').textContent='Dealing cards…';
+  updateTrickNum(null);updateBidInfo(null,null);
+  $('status').textContent='Dealing cards…';
   setActiveAv(-1);players.forEach(p=>{if(p.position!==myPos)updateFan(vslot(p.position),0);});
   if(!isReconnect){ showDealAnim(dealerName,firstActiveName);sfxDeal(); }
 });
 
 socket.on('handUpdate',({hand,dealPhase,isRedeal})=>{
   myHand=hand;handCounts[myPos]=hand.length;
-  // Enable discard-all if: 5 cards, calling phase, no face card, first deal
-  const hasFace=hand.some(c=>['A','J','Q','K'].includes(c.rank));
-  if(dealPhase==='initial'&&hand.length===5&&!hasFace){ canDiscardAll=true; }
-  else if(isRedeal){ canDiscardAll=false; } // after redeal, no more discard
+  // Only the callingStart player (first card receiver) can discard, and only if no A/J/Q/K
+  const isFirstReceiver=(window._callingStartPos===myPos);
+  const hasFaceOrAce=hand.some(c=>['A','J','Q','K'].includes(c.rank));
+  if(dealPhase==='initial'&&hand.length===5&&!hasFaceOrAce&&isFirstReceiver){
+    canDiscardAll=true;
+  }else if(isRedeal){
+    canDiscardAll=false;
+  }
   renderHand(dealPhase==='initial'&&!isRedeal);
 });
 
@@ -532,7 +551,12 @@ socket.on('bidEvent',({type,pos,name,bid})=>{
 socket.on('powerCardReturned',()=>toast('Your power card was returned'));
 socket.on('selectPowerCard',({hand})=>{myHand=hand;renderHand();openPowerPanel(hand);});
 socket.on('powerCardPlaced',({bidderPos,bidderName,bid})=>{currentBidder=bidderPos;$('status').textContent=`${bidderName} placed power card (bid:${bid})`;toast(`${bidderName} placed power card`);});
-socket.on('callingDone',({bidder,bidderName,bid})=>{currentBidder=bidder;$('status').textContent=`${bidderName} wins bid at ${bid}`;toast(`${bidderName} wins bid at ${bid}!`);});
+socket.on('callingDone',({bidder,bidderName,bid})=>{
+  currentBidder=bidder;
+  $('status').textContent=`${bidderName} wins bid at ${bid}`;
+  updateBidInfo(bidderName,bid);
+  toast(`${bidderName} wins bid at ${bid}!`);
+});
 
 // Discard result
 socket.on('playerDiscarded',({pos,name})=>{
@@ -555,7 +579,9 @@ socket.on('dealingComplete',({bidderName,bid})=>{$('status').textContent=`${bidd
 
 // Playing
 socket.on('playingStarted',({currentPlayer:cp,currentPlayerName,trickNumber})=>{
-  setActiveAv(cp);$('status').textContent=`${currentPlayerName} leads Trick 1`;$('tn').textContent=`Trick ${trickNumber}/13`;
+  setActiveAv(cp);
+  $('status').textContent=`${currentPlayerName} leads Trick 1`;
+  updateTrickNum(trickNumber);
 });
 socket.on('turnChanged',({currentPlayer:cp,currentPlayerName})=>{
   setActiveAv(cp);
@@ -594,7 +620,8 @@ socket.on('trickComplete',({winnerPos,winnerName,winnerTeam,tricksWon,trickNumbe
   $('status').textContent=`${winnerName} (Team ${winnerTeam}) wins trick ${trickNumber}!`;toast(`${winnerName} wins trick ${trickNumber}! 🎉`,2000);
 });
 socket.on('newTrickStarting',({trickNumber,leader,leaderName})=>{
-  clearTricks();leadSuit=null;$('tn').textContent=`Trick ${trickNumber}/13`;
+  clearTricks();leadSuit=null;
+  updateTrickNum(trickNumber);
   $('status').textContent=`${leaderName} leads Trick ${trickNumber}`;setRevealBtn(false);
 });
 socket.on('roundEnd',data=>{
