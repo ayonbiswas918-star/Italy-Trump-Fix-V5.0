@@ -359,9 +359,12 @@ function renderSeats(ps){
     div.className=`seat-tile${p?' full':''}${isMe?' me':''}`;
     if(p){
       const tm=teamOf(i),em=playerEmojis[i]||p.name[0].toUpperCase();
+      // Host can kick non-self players
+      const canKick=amHost&&!isMe;
       div.innerHTML=`<div class="s-av ${tm}">${em}</div>
         <div class="s-info"><div class="s-num">Seat ${i+1}${isMe?' ★':''}</div><div class="s-name">${p.name}</div></div>
-        <span class="s-badge ${tm}">Team ${tm}</span>`;
+        <span class="s-badge ${tm}">Team ${tm}</span>
+        ${canKick?`<button class="kick-btn show" title="Kick player" onclick="event.stopPropagation();kickPlayer(${i})">✕</button>`:''}`;
     }else{
       div.innerHTML=`<div class="s-av empty">＋</div>
         <div class="s-info"><div class="s-num">Seat ${i+1}</div><div class="s-name" style="opacity:.22">Empty</div></div>`;
@@ -440,6 +443,10 @@ function onJoinRoom(){
   socket.emit('joinRoom',{name:n,code:c,emoji:myEmoji,sessionId:SESSION_ID});
 }
 function onStartGame(){socket.emit('startGame');}
+function kickPlayer(pos){
+  if(!amHost)return;
+  if(confirm('Kick this player?'))socket.emit('kickPlayer',{targetPos:pos});
+}
 function onRestartGame(){socket.emit('restartGame');}
 function copyCode(){navigator.clipboard?.writeText($('disp-code').textContent).then(()=>toast('Code copied! 📋'));}
 function selectTarget(v){
@@ -529,12 +536,13 @@ socket.on('handUpdate',({hand,dealPhase,isRedeal})=>{
   // Only the callingStart player (first card receiver) can discard, and only if no A/J/Q/K
   const isFirstReceiver=(window._callingStartPos===myPos);
   const hasFaceOrAce=hand.some(c=>['A','J','Q','K'].includes(c.rank));
-  if(dealPhase==='initial'&&hand.length===5&&!hasFaceOrAce&&isFirstReceiver){
+  // Allow discard as long as: no ace/face, is first receiver, 5 cards in hand
+  if(hand.length===5&&!hasFaceOrAce&&isFirstReceiver&&(dealPhase==='initial'||isRedeal)){
     canDiscardAll=true;
-  }else if(isRedeal){
+  }else{
     canDiscardAll=false;
   }
-  renderHand(dealPhase==='initial'&&!isRedeal);
+  renderHand((dealPhase==='initial'||isRedeal));
 });
 
 // Calling
@@ -563,8 +571,8 @@ socket.on('playerDiscarded',({pos,name})=>{
   if(pos!==myPos) toast(`${name} discarded their hand and got new cards`);
 });
 socket.on('discardResult',({newHand,hasFace})=>{
-  if(hasFace) toast('New hand dealt! You have a face card now ✅');
-  else toast('New hand dealt! Still no face card — play with what you have');
+  if(hasFace) toast('New hand has a face card / Ace ✅');
+  else toast('Still no face card or Ace — you can discard again!');
 });
 
 // Dealing
@@ -639,6 +647,15 @@ socket.on('gameOver',({winner,scores:sc})=>{
 });
 socket.on('playerLeft',({name,players:ps})=>{
   if(ps)players=ps;renderPlayers(players);toast(`⚠ ${name} disconnected`,3500);
+});
+socket.on('kicked',()=>{
+  currentRoomCode=null;myPos=-1;amHost=false;
+  hideAllOv();showScreen('screen-lobby');
+  $('lerr').textContent='You were removed from the room by the host.';
+  toast('⚠ You have been kicked from the room',4000);
+});
+socket.on('playerKicked',({name})=>{
+  toast(`${name} was removed from the room`,3000);
 });
 socket.on('err',msg=>{
   sfxErr();toast(`⚠ ${msg}`,3000);

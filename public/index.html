@@ -294,7 +294,7 @@ html,body{
 
 /* ── TRUMP PANEL — floating badge top-right ── */
 .trump-panel{
-  position:absolute;top:8px;right:8px;z-index:30;
+  position:absolute;top:52px;right:8px;z-index:30;
   display:flex;flex-direction:column;align-items:center;gap:4px;
   background:rgba(0,0,0,.72);border:1px solid rgba(200,148,26,.28);
   border-radius:12px;padding:7px 9px;
@@ -339,7 +339,7 @@ html,body{
   0%,100%{box-shadow:0 3px 0 rgba(0,0,0,.4),0 0 18px rgba(156,39,176,.55)}
   50%{box-shadow:0 3px 0 rgba(0,0,0,.4),0 0 35px rgba(224,64,251,.95),0 0 65px rgba(156,39,176,.3)}}
 
-.game-ctrl{position:absolute;top:5px;right:6px;z-index:60;display:flex;gap:5px}
+.game-ctrl{position:absolute;top:8px;right:8px;z-index:60;display:flex;gap:5px}
 
 /* ══════════════════════════════════════
    CARDS — PNG IMAGE STYLE
@@ -610,28 +610,48 @@ html,body{
   text-shadow:0 0 16px rgba(200,148,26,.5);
   min-height:1.2rem}
 
-/* ── MY IDENTITY — absolute bottom-left ── */
+/* ── MY IDENTITY — bottom, slightly left of center ── */
 .me-identity{
   position:absolute;
-  bottom:8px;left:8px;
+  bottom:10px;
+  left:calc(50% - 280px);  /* left of center, purple block position */
   z-index:30;
   display:flex;flex-direction:column;align-items:center;gap:4px}
 
-/* ── MY HAND — absolute bottom, left margin for identity ── */
+/* ── MY HAND — bottom center-right, gap from identity ── */
 .my-hand-wrap{
   position:absolute;
   bottom:4px;
-  left:80px;   /* space for identity panel on left */
+  left:calc(50% - 170px);  /* starts after identity, slight right of center */
   right:4px;
   z-index:25;
   display:flex;align-items:flex-end;justify-content:flex-start;
-  overflow:visible;min-height:100px;
-  padding:0 4px}
-.my-hand-wrap .mc:not(:first-child){margin-left:-24px}
+  overflow:visible;min-height:106px;
+  padding:0 6px}
+.my-hand-wrap .mc:not(:first-child){margin-left:-25px}
 
 /* ── TOP ROW (teammate): avatar left, name, fan right ── */
 .top-row{
   display:flex;align-items:center;gap:6px}
+
+
+/* ── KICK OVERLAY ── */
+.kick-overlay{
+  display:none;position:absolute;inset:0;border-radius:12px;
+  background:rgba(200,40,40,.88);
+  align-items:center;justify-content:center;
+  font-family:var(--fm);font-size:.78rem;color:#fff;font-weight:700;
+  letter-spacing:.04em;cursor:pointer;z-index:5}
+.seat-tile:hover .kick-overlay.visible{display:flex}
+.kick-btn{
+  position:absolute;top:4px;right:4px;
+  width:20px;height:20px;border-radius:50%;
+  background:rgba(200,40,40,.85);border:1.5px solid rgba(255,100,100,.5);
+  color:#fff;font-size:.7rem;font-weight:700;
+  display:none;align-items:center;justify-content:center;
+  cursor:pointer;z-index:10;line-height:1}
+.kick-btn.show{display:flex}
+.kick-btn:hover{background:rgba(220,20,20,.95)}
 
 /* ── DISCARD BUTTON inside bid panel ── */
 .btn-discard-panel{
@@ -689,7 +709,13 @@ html,body{
 <!-- ══ WAITING ══ -->
 <div id="screen-waiting" class="screen">
   <div class="wait-wrap">
-    <h2>Waiting Room</h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:.2rem">
+      <h2 style="margin:0">Waiting Room</h2>
+      <div style="display:flex;gap:6px">
+        <button class="btn-sm" onclick="toggleFullscreen()" title="Fullscreen">⛶</button>
+        <button class="btn-sm" onclick="onRestartGame()" title="Reset">🔄</button>
+      </div>
+    </div>
     <div class="code-box">
       <div class="code-lbl">Room Code</div>
       <div class="code-val" id="disp-code">------</div>
