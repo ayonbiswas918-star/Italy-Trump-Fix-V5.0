@@ -390,7 +390,11 @@ function openBidPanel(current,canPass,hand){
   });
   const hp=$('hp-cards');hp.innerHTML='';
   if(hand)hand.forEach(c=>hp.appendChild(mkCard(c)));
+  // Show discard button inside bid panel if player can discard
+  setDiscardBtn(canDiscardAll);
   showOv('ov-bid');sfxBid();
+  // Always restart bid timer fresh when panel opens
+  stopBidTimer();
   startBidTimer(()=>{if(canPass)placeBid('nil');else placeBid(current>0?current+1:7);});
 }
 function placeBid(bid){stopBidTimer();socket.emit('makeBid',{bid});hideOv('ov-bid');}
@@ -533,22 +537,34 @@ socket.on('roundBegin',({roundNumber:rn,scores:sc,players:ps,matchTarget:mt,
 
 socket.on('handUpdate',({hand,dealPhase,isRedeal})=>{
   myHand=hand;handCounts[myPos]=hand.length;
-  // Only the callingStart player (first card receiver) can discard, and only if no A/J/Q/K
   const isFirstReceiver=(window._callingStartPos===myPos);
   const hasFaceOrAce=hand.some(c=>['A','J','Q','K'].includes(c.rank));
-  // Allow discard as long as: no ace/face, is first receiver, 5 cards in hand
-  if(hand.length===5&&!hasFaceOrAce&&isFirstReceiver&&(dealPhase==='initial'||isRedeal)){
+  // Can discard: is callingStart, has 5 cards, no ace/face, during initial deal or redeal
+  if(isFirstReceiver && hand.length===5 && !hasFaceOrAce && (dealPhase==='initial'||isRedeal)){
     canDiscardAll=true;
-  }else{
+  } else if(dealPhase==='initial'||isRedeal){
     canDiscardAll=false;
   }
-  renderHand((dealPhase==='initial'||isRedeal));
+  renderHand(!!(dealPhase==='initial'||isRedeal));
+  // If bid panel is already open, update discard button visibility
+  if($('ov-bid')?.classList.contains('open')){
+    setDiscardBtn(canDiscardAll);
+    // Also refresh cards preview in panel
+    const hp=$('hp-cards');
+    if(hp){hp.innerHTML='';myHand.forEach(c=>hp.appendChild(mkCard(c)));}
+  }
 });
 
 // Calling
 socket.on('callingStarted',({callerPos,callerName})=>{setActiveAv(callerPos);$('status').textContent=`${callerName} is deciding bid…`;});
 socket.on('callingTurn',({callerPos,callerName,currentBid:cb})=>{currentBid=cb;setActiveAv(callerPos);$('status').textContent=`${callerName} is deciding bid…`;});
-socket.on('yourCallingTurn',({currentBid:cb,canPass,hand})=>{currentBid=cb;openBidPanel(cb,canPass,hand);});
+socket.on('yourCallingTurn',({currentBid:cb,canPass,hand,afterDiscard})=>{
+  currentBid=cb;
+  if(hand&&hand.length>0) myHand=hand;
+  // If called after a discard, stop existing timer first so it resets to 30s
+  if(afterDiscard) stopBidTimer();
+  openBidPanel(cb,canPass,hand||myHand);
+});
 socket.on('bidEvent',({type,pos,name,bid})=>{
   if(type==='pass'){bidLog.push({name,bid:'nil'});toast(`${name} passed`);$('status').textContent=`${name} passed`;}
   else if(type==='bid'){bidLog.push({name,bid});currentBid=bid;currentBidder=pos;toast(`${name} bid ${bid}!`);sfxBid();$('status').textContent=`${name} bid ${bid}`;}
@@ -570,9 +586,13 @@ socket.on('callingDone',({bidder,bidderName,bid})=>{
 socket.on('playerDiscarded',({pos,name})=>{
   if(pos!==myPos) toast(`${name} discarded their hand and got new cards`);
 });
-socket.on('discardResult',({newHand,hasFace})=>{
-  if(hasFace) toast('New hand has a face card / Ace ✅');
-  else toast('Still no face card or Ace — you can discard again!');
+socket.on('discardResult',({hasFace})=>{
+  if(hasFace){
+    toast('✅ New hand has a face card / Ace!', 3000);
+  } else {
+    toast('🔄 Still no face card / Ace — can discard again!', 3000);
+  }
+  // discard button visibility handled by handUpdate + yourCallingTurn
 });
 
 // Dealing
