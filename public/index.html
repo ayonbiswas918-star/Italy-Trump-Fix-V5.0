@@ -215,10 +215,8 @@ html,body{
 .ppod-top{
   top:8px;left:50%;transform:translateX(-50%);
   flex-direction:column;align-items:center}
-/* BOTTOM (me) — centered, bottom edge */
-.ppod-bottom{
-  bottom:4px;left:50%;transform:translateX(-50%);
-  flex-direction:column-reverse;align-items:center}
+/* BOTTOM pod removed — me-identity and my-hand-wrap are now absolute directly */
+.ppod-bottom{ display:none }
 /* LEFT — centered vertically, left edge */
 .ppod-left{
   left:8px;top:50%;transform:translateY(-50%);
@@ -393,12 +391,12 @@ html,body{
 
 /* My hand cards — largest & interactive */
 .mc{
-  width:70px;height:98px;
+  width:76px;height:108px;
   cursor:pointer;z-index:1;transform-origin:bottom center;
   transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s,filter .15s}
 .mc:not(.inv):hover{
-  transform:translateY(-28px) rotateX(10deg) scale(1.06);z-index:20;
-  box-shadow:0 16px 36px rgba(0,0,0,.8),0 0 0 2.5px rgba(200,148,26,.55)}
+  transform:translateY(-32px) rotateX(10deg) scale(1.06);z-index:20;
+  box-shadow:0 18px 40px rgba(0,0,0,.8),0 0 0 2.5px rgba(200,148,26,.55)}
 .mc.inv{filter:brightness(.35) saturate(.15);cursor:not-allowed}
 .mc.vh{animation:validPulse 1.8s ease-in-out infinite}
 @keyframes validPulse{
@@ -584,38 +582,52 @@ html,body{
   .cb{width:18px;height:26px}.fan .cb:not(:first-child){margin-left:-13px}
 }
 
-/* ── TOP INFO BAR ── */
-.top-info-bar{
-  flex-shrink:0;
-  display:flex;flex-direction:column;align-items:center;gap:3px;
-  padding:5px 10px 4px;
-  background:rgba(0,0,0,.45);
-  border-bottom:1px solid rgba(200,148,26,.15);
-  z-index:20;position:relative}
+/* ── INFO PANEL — absolute top-left ── */
+.info-panel{
+  position:absolute;
+  top:8px;left:8px;
+  z-index:40;
+  display:flex;flex-direction:column;gap:4px;
+  background:rgba(0,0,0,.62);
+  border:1px solid rgba(200,148,26,.22);
+  border-radius:12px;
+  padding:8px 12px 7px;
+  backdrop-filter:blur(6px);
+  box-shadow:0 4px 18px rgba(0,0,0,.6);
+  min-width:160px}
 .tib-tricks{
-  display:flex;align-items:center;gap:.5rem;font-size:.72rem;font-weight:800}
+  display:flex;align-items:center;gap:.45rem;font-size:.74rem;font-weight:800}
 .tib-sep{color:rgba(255,255,255,.25);font-size:.7rem}
 .tib-tn{color:rgba(255,255,255,.38);font-size:.68rem;font-weight:700}
 .ta-t{color:var(--ta)}.tb-t{color:var(--tb)}
-.tib-bid{font-size:.68rem;color:rgba(200,148,26,.75);font-weight:700;min-height:.85rem;letter-spacing:.04em}
-/* Whose turn — larger, light color */
+.tib-bid{
+  font-size:.7rem;color:rgba(200,148,26,.85);
+  font-weight:700;letter-spacing:.03em;min-height:.85rem}
+/* Whose turn — bigger, bright */
 .tib-turn{
-  font-family:var(--fm);font-size:.88rem;font-weight:700;
-  color:#fff;letter-spacing:.04em;text-align:center;
-  text-shadow:0 0 14px rgba(200,148,26,.4);
-  min-height:1.1rem}
+  font-family:var(--fm);font-size:1rem;font-weight:700;
+  color:#fff;letter-spacing:.04em;
+  text-shadow:0 0 16px rgba(200,148,26,.5);
+  min-height:1.2rem}
 
-/* ── BOTTOM ROW (me): avatar left, hand right ── */
-.bottom-row{
-  display:flex;align-items:flex-end;gap:8px;
-  width:100%;padding:0 6px 2px}
-.bottom-identity{
-  display:flex;flex-direction:column;align-items:center;gap:3px;
-  flex-shrink:0;padding-bottom:4px}
+/* ── MY IDENTITY — absolute bottom-left ── */
+.me-identity{
+  position:absolute;
+  bottom:8px;left:8px;
+  z-index:30;
+  display:flex;flex-direction:column;align-items:center;gap:4px}
+
+/* ── MY HAND — absolute bottom, left margin for identity ── */
 .my-hand-wrap{
+  position:absolute;
+  bottom:4px;
+  left:80px;   /* space for identity panel on left */
+  right:4px;
+  z-index:25;
   display:flex;align-items:flex-end;justify-content:flex-start;
-  overflow:visible;min-height:96px;flex:1}
-.my-hand-wrap .mc:not(:first-child){margin-left:-28px}
+  overflow:visible;min-height:100px;
+  padding:0 4px}
+.my-hand-wrap .mc:not(:first-child){margin-left:-24px}
 
 /* ── TOP ROW (teammate): avatar left, name, fan right ── */
 .top-row{
@@ -634,6 +646,7 @@ html,body{
 
 /* Remove old center-info absolute positioning since it's now in top bar */
 .center-info{display:none}
+.top-info-bar{display:none}
 
 /* Status/tally now inside top-info-bar — keep old selectors working */
 
@@ -717,20 +730,20 @@ html,body{
     </div>
   </div>
 
-  <!-- Top info bar: tricks, bid, turn -->
-  <div class="top-info-bar">
-    <div class="tib-tricks">
-      <span class="ta-t">A: <b id="ta">0</b></span>
-      <span class="tib-sep">·</span>
-      <span class="tb-t">B: <b id="tb">0</b></span>
-      <span class="tib-tn" id="tn"></span>
-    </div>
-    <div class="tib-bid" id="tib-bid"></div>
-    <div class="tib-turn" id="status">Welcome!</div>
-  </div>
-
   <!-- Full-screen game table -->
   <div class="game-table" id="game-table">
+
+    <!-- Info panel: top-left corner, absolute -->
+    <div class="info-panel" id="info-panel">
+      <div class="tib-tricks">
+        <span class="ta-t">A: <b id="ta">0</b></span>
+        <span class="tib-sep">·</span>
+        <span class="tb-t">B: <b id="tb">0</b></span>
+        <span class="tib-tn" id="tn"></span>
+      </div>
+      <div class="tib-bid" id="tib-bid"></div>
+      <div class="tib-turn" id="status">Welcome!</div>
+    </div>
 
     <!-- TOP player: avatar+name LEFT, fan RIGHT -->
     <div class="ppod ppod-top" id="ppod-top">
@@ -773,16 +786,14 @@ html,body{
       <div class="nchip"><div class="nc-n" id="nm-right">—</div><div class="nc-t B" id="nt-right">—</div><div class="nc-tr" id="ntr-right"></div></div>
     </div>
 
-    <!-- BOTTOM (me): avatar+name LEFT, hand RIGHT -->
-    <div class="ppod ppod-bottom" id="ppod-bottom">
-      <div class="bottom-row">
-        <div class="bottom-identity">
-          <div class="av A sm" id="av-me"><div class="av-inner" id="av-me-l">?</div><div class="dcrown" id="dc-bottom">👑</div></div>
-          <div class="nchip"><div class="nc-n" id="nm-bottom">You</div><div class="nc-t A" id="nt-bottom">—</div><div class="nc-tr" id="ntr-bottom"></div></div>
-        </div>
-        <div class="my-hand-wrap" id="my-hand"></div>
-      </div>
+    <!-- BOTTOM: avatar+name bottom-left, hand bottom-center/right -->
+    <!-- My identity: bottom-left corner -->
+    <div class="me-identity" id="me-identity">
+      <div class="av A sm" id="av-me"><div class="av-inner" id="av-me-l">?</div><div class="dcrown" id="dc-bottom">👑</div></div>
+      <div class="nchip"><div class="nc-n" id="nm-bottom">You</div><div class="nc-t A" id="nt-bottom">—</div><div class="nc-tr" id="ntr-bottom"></div></div>
     </div>
+    <!-- My hand: bottom, starts after identity -->
+    <div class="my-hand-wrap" id="my-hand"></div>
 
     <!-- Reveal trump btn -->
     <button id="btn-trump" onclick="onRevealTrump()">🔮 Reveal Trump</button>
