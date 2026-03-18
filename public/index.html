@@ -344,122 +344,79 @@ html,body{
 .game-ctrl{position:absolute;top:5px;right:6px;z-index:60;display:flex;gap:5px}
 
 /* ══════════════════════════════════════
-   CARDS — REAL CASINO STYLE
+   CARDS — PNG IMAGE STYLE
 ══════════════════════════════════════ */
 .card{
-  background:#fffef5;
   border-radius:7px;flex-shrink:0;
-  border:1px solid rgba(0,0,0,.12);
-  box-shadow:0 3px 10px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.5);
-  position:relative;overflow:hidden;transform-style:preserve-3d;
-  display:flex;flex-direction:column}
-/* Top gloss */
-.card::before{
-  content:'';position:absolute;inset:0;border-radius:7px;pointer-events:none;z-index:5;
-  background:linear-gradient(148deg,rgba(255,255,255,.6) 0%,transparent 42%,rgba(0,0,0,.03) 100%)}
-/* Thin border inner line (real card look) */
-.card::after{
-  content:'';position:absolute;inset:3px;border-radius:4px;pointer-events:none;z-index:4;
-  border:1px solid rgba(0,0,0,.07)}
-
-/* Corner index */
-.card-corner{
-  position:absolute;z-index:6;
-  display:flex;flex-direction:column;align-items:center;line-height:1.05;gap:0}
-.card-corner-tl{top:3px;left:4px}
-.card-corner-br{bottom:3px;right:4px;transform:rotate(180deg)}
-.c-rank{font-family:'Cinzel',serif;font-size:.88rem;font-weight:700;line-height:1.1}
-.c-suit-sm{font-size:.68rem;line-height:1}
-
-/* Center pip/face area */
-.card-center-area{
-  position:absolute;inset:0;z-index:3;
+  border:1px solid rgba(0,0,0,.15);
+  box-shadow:0 3px 10px rgba(0,0,0,.55);
+  position:relative;overflow:hidden;
+  background:#fff;
   display:flex;align-items:center;justify-content:center}
-.card-svg{width:72%;height:72%;overflow:visible}
-.card-svg-face{width:82%;height:82%}
 
-/* Suit colors */
-.card.r .c-rank,.card.r .c-suit-sm{color:#d42b2b}
-.card.k .c-rank,.card.k .c-suit-sm{color:#111}
+/* PNG image card */
+.img-card{padding:0;background:#fff;}
+.img-card img{
+  width:100%;height:100%;
+  object-fit:contain;
+  display:block;
+  border-radius:6px;
+  pointer-events:none;
+  user-select:none;-webkit-user-drag:none}
+
+/* Fallback text when image not loaded */
+.card-fallback{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px;background:#fff}
 
 /* ── FACE DOWN BACK ── */
 .card.back{
   background:linear-gradient(158deg,#0c1540,#1a2e80,#0c1540);
   border:1.5px solid rgba(100,140,255,.22)}
-.card.back::before{background:linear-gradient(145deg,rgba(100,140,255,.15),transparent 50%)}
 .card.back::after{
-  border:1px solid rgba(100,140,255,.15);
+  content:'';position:absolute;inset:4px;border-radius:5px;
   background:
     repeating-linear-gradient(45deg,rgba(100,140,255,.07),rgba(100,140,255,.07) 3px,transparent 3px,transparent 8px),
-    repeating-linear-gradient(-45deg,rgba(100,140,255,.04),rgba(100,140,255,.04) 3px,transparent 3px,transparent 8px)}
-.card.back .card-corner,.card.back .card-center-area{display:none}
+    repeating-linear-gradient(-45deg,rgba(100,140,255,.04),rgba(100,140,255,.04) 3px,transparent 3px,transparent 8px);
+  border:1px solid rgba(100,140,255,.12)}
 
 /* ── SIZES ── */
 /* Trick cards on felt */
 .tc{width:52px;height:74px}
-.tc .c-rank{font-size:.82rem}
-.tc .c-suit-sm{font-size:.62rem}
-.tc .card-corner-tl{top:3px;left:3px}
-.tc .card-corner-br{bottom:3px;right:3px}
 
-/* Small back cards */
+/* Small (back, trump panel) */
 .card.sm{width:38px;height:54px}
-.card.sm .c-rank{font-size:.7rem}
-.card.sm .c-suit-sm{font-size:.56rem}
-.card.sm .card-corner-tl{top:2px;left:3px}
-.card.sm .card-corner-br{bottom:2px;right:3px}
-.card.sm .card-svg{width:65%;height:65%}
 
 /* Medium (trump reveal) */
 .card.med{width:46px;height:64px}
-.card.med .c-rank{font-size:.76rem}
-.card.med .c-suit-sm{font-size:.6rem}
 
-/* My hand cards — largest */
+/* My hand cards — largest & interactive */
 .mc{
-  width:68px;height:96px;
+  width:70px;height:98px;
   cursor:pointer;z-index:1;transform-origin:bottom center;
   transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s,filter .15s}
-.mc .c-rank{font-size:.96rem}
-.mc .c-suit-sm{font-size:.72rem}
-.mc .card-corner-tl{top:4px;left:5px}
-.mc .card-corner-br{bottom:4px;right:5px}
-.mc .card-svg{width:76%;height:76%}
 .mc:not(.inv):hover{
-  transform:translateY(-28px) rotateX(12deg) scale(1.06);z-index:20;
-  box-shadow:0 16px 36px rgba(0,0,0,.8),0 0 0 2px rgba(200,148,26,.45)}
+  transform:translateY(-28px) rotateX(10deg) scale(1.06);z-index:20;
+  box-shadow:0 16px 36px rgba(0,0,0,.8),0 0 0 2.5px rgba(200,148,26,.55)}
 .mc.inv{filter:brightness(.35) saturate(.15);cursor:not-allowed}
 .mc.vh{animation:validPulse 1.8s ease-in-out infinite}
 @keyframes validPulse{
   0%,100%{box-shadow:0 3px 10px rgba(0,0,0,.5),0 0 0 2px rgba(200,148,26,.45)}
-  50%{box-shadow:0 3px 10px rgba(0,0,0,.5),0 0 0 2.5px var(--gold2),0 0 22px rgba(200,148,26,.6)}}
-
-/* Deal fly-in */
+  50%{box-shadow:0 3px 10px rgba(0,0,0,.5),0 0 0 3px var(--gold2),0 0 22px rgba(200,148,26,.7)}}
 .mc.dealing{animation:dealFly .35s cubic-bezier(.34,1.56,.64,1) both}
 @keyframes dealFly{from{transform:translateY(-70px) translateX(12px) rotate(-15deg) scale(.3);opacity:0}to{transform:none;opacity:1}}
-
-/* Trick card play slide */
 .tc.played{animation:tcSlide .26s cubic-bezier(.34,1.56,.64,1)}
 @keyframes tcSlide{from{transform:scale(.4) translateY(-20px) rotate(-8deg);opacity:0}to{transform:none;opacity:1}}
-
-/* Winner flash */
 .tc.winner{animation:tcWin .5s ease-out .08s both}
 @keyframes tcWin{
   0%,100%{transform:none;filter:none}
-  40%{transform:scale(1.22) translateY(-6px);filter:brightness(1.5) drop-shadow(0 0 14px rgba(200,148,26,.9))}}
-
+  40%{transform:scale(1.22) translateY(-6px);filter:brightness(1.3) drop-shadow(0 0 14px rgba(200,148,26,.9))}}
 .card.dragging{opacity:.35;transform:scale(1.1) rotate(4deg)}
-
-/* HP preview */
 .hp-cards .card{width:42px;height:60px;pointer-events:none}
-.hp-cards .c-rank{font-size:.7rem}
-.hp-cards .c-suit-sm{font-size:.56rem}
-.hp-cards .card-corner-tl{top:2px;left:3px}
-.hp-cards .card-corner-br{bottom:2px;right:3px}
-.hp-cards .card-svg{width:65%;height:65%}
-
-/* pwr hand */
-.pwr-hand .mc{width:56px;height:80px;margin-left:0!important}
+.pwr-hand .mc{width:58px;height:82px;margin-left:0!important}
+/* offline avatar style */
+.av.sm{width:44px;height:44px}
+.av.offline{opacity:.55;filter:grayscale(.6)}
 
 /* ══════════════════════════════════════
    GAME OVER

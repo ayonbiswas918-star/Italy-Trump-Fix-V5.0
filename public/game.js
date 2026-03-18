@@ -163,67 +163,37 @@ function toggleFullscreen(){
   }
 }
 
-// ── Real Card Builder ─────────────────────────
-const PIPS={
-  'A':[[50,50,1.9]],
-  '2':[[50,22],[50,78]],
-  '3':[[50,22],[50,50],[50,78]],
-  '4':[[22,22],[78,22],[22,78],[78,78]],
-  '5':[[22,22],[78,22],[50,50],[22,78],[78,78]],
-  '6':[[22,22],[78,22],[22,50],[78,50],[22,78],[78,78]],
-  '7':[[22,22],[78,22],[50,35],[22,50],[78,50],[22,78],[78,78]],
-  '8':[[22,22],[78,22],[50,33],[22,50],[78,50],[50,67],[22,78],[78,78]],
-  '9':[[22,18],[78,18],[22,38],[78,38],[50,50],[22,62],[78,62],[22,82],[78,82]],
-  '10':[[22,15],[78,15],[50,28],[22,40],[78,40],[20,60],[80,60],[50,72],[22,85],[78,85]],
+// ── Card Image Builder ─────────────────────────
+// Maps game rank → filename prefix
+const RANK_FILE = {
+  'A':'ace','2':'2','3':'3','4':'4','5':'5','6':'6',
+  '7':'7','8':'8','9':'9','10':'10',
+  'J':'jack','Q':'queen','K':'king'
 };
-function faceArt(rank,suit,col){
-  const c=col==='r'?'#c8941a':'#1a1a2e', fc=col==='r'?'#d42b2b':'#111';
-  const sym=SYM[suit];
-  if(rank==='J')return`
-    <rect x="15" y="15" width="70" height="70" rx="4" fill="none" stroke="${c}" stroke-width="2.5" opacity=".3"/>
-    <rect x="22" y="22" width="56" height="56" rx="2" fill="none" stroke="${c}" stroke-width=".8" opacity=".15"/>
-    <text x="50" y="55" text-anchor="middle" font-size="38" fill="${fc}" font-family="'Cinzel',serif" font-weight="700" opacity=".9">J</text>
-    <text x="50" y="34" text-anchor="middle" font-size="13" fill="${fc}" opacity=".5">${sym}</text>
-    <text x="50" y="75" text-anchor="middle" font-size="13" fill="${fc}" opacity=".5" transform="rotate(180,50,72)">${sym}</text>`;
-  if(rank==='Q')return`
-    <rect x="15" y="15" width="70" height="70" rx="4" fill="${col==='r'?'rgba(212,43,43,.06)':'rgba(17,17,17,.04)'}" stroke="${c}" stroke-width="2.5" opacity=".3"/>
-    <circle cx="50" cy="38" r="10" fill="none" stroke="${c}" stroke-width="1.5" opacity=".35"/>
-    <text x="50" y="42" text-anchor="middle" font-size="11" fill="${fc}" opacity=".5">♛</text>
-    <text x="50" y="62" text-anchor="middle" font-size="38" fill="${fc}" font-family="'Cinzel',serif" font-weight="700" opacity=".9">Q</text>
-    <text x="50" y="79" text-anchor="middle" font-size="11" fill="${fc}" opacity=".5" transform="rotate(180,50,75)">♛</text>`;
-  if(rank==='K')return`
-    <rect x="13" y="13" width="74" height="74" rx="5" fill="${col==='r'?'rgba(212,43,43,.07)':'rgba(17,17,17,.05)'}" stroke="${c}" stroke-width="3" opacity=".35"/>
-    <rect x="21" y="21" width="58" height="58" rx="2" fill="none" stroke="${c}" stroke-width=".8" opacity=".15"/>
-    <text x="50" y="37" text-anchor="middle" font-size="13" fill="${fc}" opacity=".55">♔</text>
-    <text x="50" y="62" text-anchor="middle" font-size="38" fill="${fc}" font-family="'Cinzel',serif" font-weight="700" opacity=".9">K</text>
-    <text x="50" y="79" text-anchor="middle" font-size="11" fill="${fc}" opacity=".45" transform="rotate(180,50,75)">♔</text>`;
-  return '';
+
+function cardImgPath(card){
+  return `/cards/${RANK_FILE[card.rank]}_of_${card.suit}.png`;
 }
-function mkCard(card,cls=''){
-  const d=document.createElement('div');
-  d.className=`card ${COL[card.suit]} ${cls}`;
-  d.dataset.id=card.id;
-  const sym=SYM[card.suit],col=COL[card.suit];
-  const fill=col==='r'?'#d42b2b':'#111111';
-  const isFace=['J','Q','K'].includes(card.rank);
-  const pips=PIPS[card.rank];
-  let centerSVG='';
-  if(card.rank==='A'){
-    centerSVG=`<svg class="card-svg" viewBox="0 0 100 100"><text x="50" y="66" text-anchor="middle" font-size="52" fill="${fill}">${sym}</text></svg>`;
-  }else if(isFace){
-    centerSVG=`<svg class="card-svg card-svg-face" viewBox="0 0 100 100"><rect x="0" y="0" width="100" height="100" fill="${col==='r'?'rgba(212,43,43,.03)':'rgba(17,17,17,.02)'}"/>${faceArt(card.rank,card.suit,col)}</svg>`;
-  }else if(pips){
-    const ps=card.rank==='10'?12:card.rank==='9'?13:14;
-    const pipSvg=pips.map(([x,y,sc])=>{
-      const fs=sc?ps*sc:ps;const flip=y>50;
-      return`<text x="${x}" y="${y+fs*.38}" text-anchor="middle" font-size="${fs}" fill="${fill}" transform="${flip?`rotate(180,${x},${y})`:''}">${sym}</text>`;
-    }).join('');
-    centerSVG=`<svg class="card-svg" viewBox="0 0 100 100">${pipSvg}</svg>`;
-  }
-  d.innerHTML=`
-    <div class="card-corner card-corner-tl"><div class="c-rank">${card.rank}</div><div class="c-suit-sm">${sym}</div></div>
-    <div class="card-center-area">${centerSVG}</div>
-    <div class="card-corner card-corner-br"><div class="c-rank">${card.rank}</div><div class="c-suit-sm">${sym}</div></div>`;
+
+function mkCard(card, cls=''){
+  const d = document.createElement('div');
+  d.className = `card img-card ${cls}`;
+  d.dataset.id = card.id;
+  // Use the PNG image as the card face
+  const img = document.createElement('img');
+  img.src = cardImgPath(card);
+  img.alt = `${card.rank} of ${card.suit}`;
+  img.draggable = false;
+  // Fallback: if image fails to load, show text
+  img.onerror = () => {
+    img.style.display = 'none';
+    const fb = document.createElement('div');
+    fb.className = 'card-fallback';
+    const col = ['hearts','diamonds'].includes(card.suit) ? '#d42b2b' : '#111';
+    fb.innerHTML = `<span style="color:${col};font-family:'Cinzel',serif;font-size:1rem;font-weight:700">${card.rank}</span><span style="color:${col};font-size:.8rem">${SYM[card.suit]}</span>`;
+    d.appendChild(fb);
+  };
+  d.appendChild(img);
   return d;
 }
 function mkBack(cls=''){const d=document.createElement('div');d.className=`card back ${cls}`;return d;}
@@ -542,7 +512,7 @@ socket.on('roundBegin',({roundNumber:rn,scores:sc,players:ps,matchTarget:mt,
 socket.on('handUpdate',({hand,dealPhase,isRedeal})=>{
   myHand=hand;handCounts[myPos]=hand.length;
   // Enable discard-all if: 5 cards, calling phase, no face card, first deal
-  const hasFace=hand.some(c=>['J','Q','K'].includes(c.rank));
+  const hasFace=hand.some(c=>['A','J','Q','K'].includes(c.rank));
   if(dealPhase==='initial'&&hand.length===5&&!hasFace){ canDiscardAll=true; }
   else if(isRedeal){ canDiscardAll=false; } // after redeal, no more discard
   renderHand(dealPhase==='initial'&&!isRedeal);
@@ -595,7 +565,13 @@ socket.on('yourTurn',({validCardIds:vids,leadSuit:ls,trumpSuit:ts,trumpRevealed:
   isMyTurn=true;validIds=vids;leadSuit=ls;
   if(tr){trumpSuit=ts;trumpRevealed=tr;updateTrumpPanel();}
   setRevealBtn(!!cr);renderHand();
-  $('status').textContent=cr?'No running suit — play any card or Reveal Trump':ls?`Follow ${SYM[ls]} ${ls}`:'Lead any card';
+  if(cr){
+    $('status').textContent='No running suit! Play any card, or 🔮 Reveal Trump to use it';
+  } else if(ls){
+    $('status').textContent=`Follow suit: ${SYM[ls]} ${ls}`;
+  } else {
+    $('status').textContent='Your turn — lead any card';
+  }
 });
 socket.on('cardPlayed',({position,name,card})=>{
   setTrick(position,card);
