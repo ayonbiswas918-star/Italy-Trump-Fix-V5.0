@@ -485,21 +485,21 @@ io.on('connection', socket=>{
     const gs=room.gameState;
     const pos=socket.data.position;
 
+    // Gate checks
     if(gs.phase!=='calling')return;
-    // Only callingStart can discard
     if(pos!==gs.callingStart)
       return socket.emit('err','Only the first card receiver can discard');
-    // Can't discard after bidding has started
-    if(gs.callingCount>0||gs.currentBid>0)
+    // Cannot discard if someone already bid
+    if(gs.currentBid>0)
       return socket.emit('err','Bidding already started');
-    // Must have exactly 5 cards (initial hand)
+    // Must have exactly 5 cards
     const hand=gs.hands[pos];
     if(hand.length!==5)return;
     // Must have NO face card or Ace
     if(hasFaceCard(hand))
       return socket.emit('err','You have a face card or Ace — no discard needed');
 
-    // ── Discard: return cards, reshuffle, deal 5 new ones ──
+    // ── Put cards back, reshuffle, deal 5 new ones ──
     gs.deck.push(...hand);
     gs.deck=shuffle(gs.deck);
     gs.hands[pos]=[];
@@ -508,29 +508,26 @@ io.on('connection', socket=>{
 
     const newHand=gs.hands[pos];
     const hasFace=hasFaceCard(newHand);
+    const canDiscardAgain=!hasFace; // no face/ace → can discard again
 
-    // Broadcast to room
+    // Tell everyone the player discarded
     io.to(room.code).emit('playerDiscarded',{pos,name:nm(room,pos)});
 
-    // Send new hand to player
+    // Send new hand to the player, then immediately re-prompt bidding
+    // with afterDiscard flag so client restarts timer
     const s=sk(room,pos);
     if(s){
-      // isRedeal:true tells client to show discard button again if still no face
-      s.emit('handUpdate',{hand:newHand,dealPhase:'initial',isRedeal:true});
-      s.emit('discardResult',{hasFace});
-    }
-
-    // ── RESTART bidding timer: re-send yourCallingTurn ──
-    // This makes the client reopen bid panel with fresh 30s timer
-    if(s){
+      s.emit('handUpdate',{hand:newHand,dealPhase:'initial',isRedeal:true,canDiscardAgain});
+      // Small delay so handUpdate is processed before bid panel reopens
       setTimeout(()=>{
         s.emit('yourCallingTurn',{
-          currentBid:0,
-          canPass:true,
-          hand:newHand,
-          afterDiscard:true, // flag so client knows timer should restart
+          currentBid: 0,
+          canPass:    true,
+          hand:       newHand,
+          afterDiscard: true,
+          canDiscardAgain,
         });
-      },300);
+      }, 150);
     }
   });
 
