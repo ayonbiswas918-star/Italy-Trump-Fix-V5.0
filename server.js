@@ -379,7 +379,8 @@ io.on('connection', socket=>{
     socket.join(uc);
     socket.data={roomCode:uc,position:pos,sessionId:sid};
     socket.emit('roomJoined',{code:uc,position:pos,players:pi(room),isHost:false,emojis:room.emojis});
-    socket.to(uc).emit('playerJoined',{players:pi(room),emojis:room.emojis});
+    // Broadcast full seats to everyone in room (including the joiner themselves)
+    io.to(uc).emit('seatsUpdated',{players:pi(room),emojis:room.emojis});
     if(room.players.length===4) io.to(uc).emit('allReady',{players:pi(room),emojis:room.emojis});
   });
 
