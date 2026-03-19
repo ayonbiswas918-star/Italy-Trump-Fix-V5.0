@@ -390,12 +390,14 @@ function openBidPanel(current,canPass,hand){
   });
   const hp=$('hp-cards');hp.innerHTML='';
   if(hand)hand.forEach(c=>hp.appendChild(mkCard(c)));
-  // Show discard button inside bid panel if player can discard
+  // Show/hide discard button inside bid panel
   setDiscardBtn(canDiscardAll);
   showOv('ov-bid');sfxBid();
-  // Always restart bid timer fresh when panel opens
+  // Always restart bid timer fresh (30s) when panel opens
   stopBidTimer();
   startBidTimer(()=>{if(canPass)placeBid('nil');else placeBid(current>0?current+1:7);});
+  // Show toast if player can discard again
+  if(canDiscardAll) toast('🔄 No face card or Ace — you can discard!', 2500);
 }
 function placeBid(bid){stopBidTimer();socket.emit('makeBid',{bid});hideOv('ov-bid');}
 
@@ -535,35 +537,43 @@ socket.on('roundBegin',({roundNumber:rn,scores:sc,players:ps,matchTarget:mt,
   if(!isReconnect){ showDealAnim(dealerName,firstActiveName);sfxDeal(); }
 });
 
-socket.on('handUpdate',({hand,dealPhase,isRedeal})=>{
+socket.on('handUpdate',({hand,dealPhase,isRedeal,canDiscardAgain})=>{
   myHand=hand;handCounts[myPos]=hand.length;
-  const isFirstReceiver=(window._callingStartPos===myPos);
-  const hasFaceOrAce=hand.some(c=>['A','J','Q','K'].includes(c.rank));
-  // Can discard: is callingStart, has 5 cards, no ace/face, during initial deal or redeal
-  if(isFirstReceiver && hand.length===5 && !hasFaceOrAce && (dealPhase==='initial'||isRedeal)){
-    canDiscardAll=true;
-  } else if(dealPhase==='initial'||isRedeal){
-    canDiscardAll=false;
+
+  if(isRedeal){
+    // After a discard redeal: server tells us if we can discard again
+    // canDiscardAll will be properly set when yourCallingTurn arrives
+    // Just update the hand display
+    canDiscardAll = !!canDiscardAgain;
+    renderHand(true); // animate the new cards
+    return;
   }
-  renderHand(!!(dealPhase==='initial'||isRedeal));
-  // If bid panel is already open, update discard button visibility
-  if($('ov-bid')?.classList.contains('open')){
-    setDiscardBtn(canDiscardAll);
-    // Also refresh cards preview in panel
-    const hp=$('hp-cards');
-    if(hp){hp.innerHTML='';myHand.forEach(c=>hp.appendChild(mkCard(c)));}
+
+  // Initial 5-card deal: check if callingStart with no face/ace
+  if(dealPhase==='initial'){
+    const isFirstReceiver=(window._callingStartPos===myPos);
+    const hasFaceOrAce=hand.some(c=>['A','J','Q','K'].includes(c.rank));
+    canDiscardAll = isFirstReceiver && hand.length===5 && !hasFaceOrAce;
+    renderHand(true);
+    return;
   }
+
+  // Normal hand update (e.g. after playing a card)
+  renderHand(false);
 });
 
 // Calling
 socket.on('callingStarted',({callerPos,callerName})=>{setActiveAv(callerPos);$('status').textContent=`${callerName} is deciding bid…`;});
 socket.on('callingTurn',({callerPos,callerName,currentBid:cb})=>{currentBid=cb;setActiveAv(callerPos);$('status').textContent=`${callerName} is deciding bid…`;});
-socket.on('yourCallingTurn',({currentBid:cb,canPass,hand,afterDiscard})=>{
+socket.on('yourCallingTurn',({currentBid:cb,canPass,hand,afterDiscard,canDiscardAgain})=>{
   currentBid=cb;
   if(hand&&hand.length>0) myHand=hand;
-  // If called after a discard, stop existing timer first so it resets to 30s
-  if(afterDiscard) stopBidTimer();
-  openBidPanel(cb,canPass,hand||myHand);
+  // After discard: update canDiscardAll from server truth
+  if(afterDiscard){
+    canDiscardAll = !!canDiscardAgain;
+  }
+  // openBidPanel always stops+restarts timer (it calls stopBidTimer then startBidTimer)
+  openBidPanel(cb,canPass,myHand);
 });
 socket.on('bidEvent',({type,pos,name,bid})=>{
   if(type==='pass'){bidLog.push({name,bid:'nil'});toast(`${name} passed`);$('status').textContent=`${name} passed`;}
@@ -587,12 +597,7 @@ socket.on('playerDiscarded',({pos,name})=>{
   if(pos!==myPos) toast(`${name} discarded their hand and got new cards`);
 });
 socket.on('discardResult',({hasFace})=>{
-  if(hasFace){
-    toast('✅ New hand has a face card / Ace!', 3000);
-  } else {
-    toast('🔄 Still no face card / Ace — can discard again!', 3000);
-  }
-  // discard button visibility handled by handUpdate + yourCallingTurn
+  // Toast handled by yourCallingTurn now via canDiscardAgain
 });
 
 // Dealing
