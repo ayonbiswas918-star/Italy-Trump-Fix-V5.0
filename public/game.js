@@ -499,17 +499,27 @@ socket.on('playerReconnected',({position,name,players:ps})=>{
 // Lobby
 socket.on('roomCreated',({code,position,players:ps,isHost,emojis})=>{
   myPos=position;amHost=isHost;players=ps;applyEmojis(emojis);currentRoomCode=code;
-  $('disp-code').textContent=code;renderSeats(ps);showScreen('screen-waiting');toast(`Room: ${code}`);
+  showScreen('screen-waiting');$('disp-code').textContent=code;renderSeats(ps);toast(`Room: ${code}`);
 });
 socket.on('roomJoined',({code,position,players:ps,isHost,emojis})=>{
   myPos=position;amHost=isHost;players=ps;applyEmojis(emojis);currentRoomCode=code;
-  $('disp-code').textContent=code;renderSeats(ps);showScreen('screen-waiting');toast(`Joined ${code}!`);
+  $('disp-code').textContent=code;
+  showScreen('screen-waiting');  // show screen FIRST so grid is visible
+  renderSeats(ps);
+  toast(`Joined ${code}!`);
 });
 socket.on('playerJoined',({players:ps,emojis})=>{players=ps;applyEmojis(emojis);renderSeats(ps);sfxDeal();toast(`${ps[ps.length-1].name} joined!`);});
 socket.on('allReady',({players:ps,emojis})=>{players=ps;applyEmojis(emojis);renderSeats(ps);toast(amHost?'All 4 ready! Start the game.':'All 4 players ready!');});
 socket.on('targetSet',({target})=>{matchTarget=target;$('t30')?.classList.toggle('sel',target===30);$('t50')?.classList.toggle('sel',target===50);toast(`Target: ${target} pts`);});
 socket.on('yourPosition',({position})=>{myPos=position;renderSeats(players);});
-socket.on('seatsUpdated',({players:ps,emojis})=>{players=ps;applyEmojis(emojis);renderSeats(ps);toast('Seats updated!');sfxDeal();});
+socket.on('seatsUpdated',({players:ps,emojis})=>{
+  players=ps;applyEmojis(emojis);
+  // Make sure we're on waiting screen (could be triggered right after roomJoined)
+  const activeScreen=document.querySelector('.screen.active');
+  if(!activeScreen||activeScreen.id==='screen-lobby') showScreen('screen-waiting');
+  renderSeats(ps);
+  sfxDeal();
+});
 socket.on('gameReset',({players:ps})=>{
   players=ps;myHand=[];validIds=[];isMyTurn=false;canDiscardAll=false;
   trumpSuit=null;trumpRevealed=false;scores={A:0,B:0};bidLog=[];stopBidTimer();
